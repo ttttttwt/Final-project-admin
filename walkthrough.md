@@ -56,7 +56,21 @@ Initialized the `lexia-admin` project based on the specification.
     -   Improved `Header` with Breadcrumbs and User Menu.
     -   Verified `npm run build` passes.
 
+### Phase 2: Dashboard Implementation (Completed)
+1.  **Backend**:
+    -   Created `AdminDashboardDTO` and `AdminDashboardService` to aggregate stats.
+    -   Implemented `AdminDashboardController` (`GET /api/v1/admin/dashboard`).
+2.  **Frontend**:
+    -   Defined `AdminDashboardStats` types.
+    -   Implemented `dashboardApi` service.
+    -   Created `StatsCard` and `RecentActivity` components.
+    -   Implemented `DashboardPage` with `useQuery` and `Skeleton` loading state.
+3.  **Verification**:
+    -   Verified backend endpoint returns correct counts.
+    -   Verified frontend displays stats cards and widgets correctly.
+
+![Dashboard Verification](file:///C:/Users/quoc/.gemini/antigravity/brain/f2e7224a-1470-4b8a-ab2b-d15ca3d3fefe/dashboard_verification_1764069324866.png)
+
 ### Next Steps
--   Implement Dashboard page.
 -   Implement User Management (List, Create, Edit).
 
