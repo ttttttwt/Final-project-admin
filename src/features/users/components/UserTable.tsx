@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, Trash2, MoreHorizontal } from "lucide-react";
 import type { User } from "../types/user.types";
-import { DataTable, type ColumnDef, type PaginationState } from "@/components/shared/DataTable";
+import { useDeleteUser } from "../hooks/useUsers";
+import {
+  DataTable,
+  type ColumnDef,
+  type PaginationState,
+} from "@/components/shared/DataTable";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 interface UserTableProps {
@@ -21,8 +29,61 @@ interface UserTableProps {
   isLoading: boolean;
 }
 
-export function UserTable({ users, pagination, onPaginationChange, isLoading }: UserTableProps) {
+export function UserTable({
+  users,
+  pagination,
+  onPaginationChange,
+  isLoading,
+}: UserTableProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Delete user state
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Delete user mutation
+  const deleteUserMutation = useDeleteUser();
+
+  // Handle delete click - open confirmation dialog
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    try {
+      await deleteUserMutation.mutateAsync(userToDelete.id);
+      toast({
+        title: "User deleted",
+        description: `User "${userToDelete.email}" has been deleted successfully.`,
+      });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message || "Failed to delete user";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
+    }
+  };
+
+  // Handle dialog close
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
 
   const columns: ColumnDef<User>[] = [
     {
@@ -74,12 +135,17 @@ export function UserTable({ users, pagination, onPaginationChange, isLoading }: 
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`/users/${user.id}/edit`)}>
+            <DropdownMenuItem
+              onClick={() => navigate(`/users/${user.id}/edit`)}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => handleDeleteClick(user)}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -90,12 +156,31 @@ export function UserTable({ users, pagination, onPaginationChange, isLoading }: 
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={users}
-      pagination={pagination}
-      onPaginationChange={onPaginationChange}
-      isLoading={isLoading}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={users}
+        pagination={pagination}
+        onPaginationChange={onPaginationChange}
+        isLoading={isLoading}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={handleDialogClose}
+        title="Delete User"
+        description={
+          userToDelete
+            ? `Are you sure you want to delete "${userToDelete.email}"? This action cannot be undone.`
+            : "Are you sure you want to delete this user?"
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+        isLoading={deleteUserMutation.isPending}
+      />
+    </>
   );
 }
