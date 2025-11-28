@@ -28,12 +28,20 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { LessonTypeSelector } from "../components/LessonTypeSelector";
 import { ReadingLessonEditor } from "../components/ReadingLessonEditor";
+import { ListeningLessonEditor } from "../components/ListeningLessonEditor";
+import { QuizLessonEditor } from "../components/QuizLessonEditor";
+import { SpeakingLessonEditor } from "../components/SpeakingLessonEditor";
 import { useCourse } from "@/features/courses/hooks/useCourses";
 import { useSections } from "@/features/courses/hooks/useSections";
 import { useCreateLesson } from "../hooks/useLessons";
 import api from "@/lib/api";
 import type { LessonType, CreateLessonInput } from "../types/lesson.types";
 import type { ReadingLessonFormData } from "../schemas/readingLesson.schema";
+import type { ListeningLessonFormData } from "../schemas/listeningLesson.schema";
+import type { QuizLessonFormData } from "../schemas/quizLesson.schema";
+import type { SpeakingLessonFormData } from "../schemas/speakingLesson.schema";
+import { calculateQuizDuration } from "../schemas/quizLesson.schema";
+import { calculateSpeakingDuration } from "../schemas/speakingLesson.schema";
 import type { Section } from "@/features/courses/types/course.types";
 
 /** Page steps */
@@ -117,15 +125,13 @@ export default function LessonCreatePage() {
         const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
 
         // Section exists! Now we need to find which course it belongs to
-        // Check if there are lessons to get courseId from
-        if (lessonsResponse.data.length > 0) {
-          // We need to find the course this section belongs to
-          // Try fetching courses and their sections
-          const coursesResponse = await api.get("/courses", {
-            params: { page: 0, size: 100 },
-          });
+        // Try fetching all courses (including drafts) using /courses/search endpoint
+        const coursesResponse = await api.get("/courses/search", {
+          params: { page: 0, size: 100 },
+        });
 
-          for (const c of coursesResponse.data.content) {
+        for (const c of coursesResponse.data.content) {
+          try {
             const sectionsResponse = await api.get(`/courses/${c.id}/sections`);
             const foundSection = sectionsResponse.data.find(
               (s: Section) => s.id === sectionId
@@ -136,31 +142,8 @@ export default function LessonCreatePage() {
               setIsValidating(false);
               return;
             }
-          }
-        } else {
-          // No lessons, but section might still exist
-          // Search through courses to find section
-          const coursesResponse = await api.get("/courses", {
-            params: { page: 0, size: 100 },
-          });
-
-          for (const c of coursesResponse.data.content) {
-            try {
-              const sectionsResponse = await api.get(
-                `/courses/${c.id}/sections`
-              );
-              const foundSection = sectionsResponse.data.find(
-                (s: Section) => s.id === sectionId
-              );
-              if (foundSection) {
-                setCourseId(c.id);
-                setCurrentSection(foundSection);
-                setIsValidating(false);
-                return;
-              }
-            } catch {
-              // Course might not have sections, continue
-            }
+          } catch {
+            // Course might not have sections, continue
           }
         }
 
@@ -208,7 +191,12 @@ export default function LessonCreatePage() {
     }
 
     // Navigate to step 2 for supported types
-    if (selectedType === "READING") {
+    if (
+      selectedType === "READING" ||
+      selectedType === "LISTENING" ||
+      selectedType === "QUIZ" ||
+      selectedType === "SPEAKING"
+    ) {
       setStep("edit-content");
     } else {
       // Other editors coming soon
@@ -242,6 +230,187 @@ export default function LessonCreatePage() {
           content: JSON.stringify(content),
           orderIndex: newOrder,
           durationMinutes: calculateReadingTime(data),
+        };
+
+        await createLessonMutation.mutateAsync({
+          sectionId,
+          data: createData,
+        });
+
+        toast({
+          title: "Lesson Created",
+          description: `"${data.title}" has been created successfully.`,
+        });
+
+        // Navigate back to course edit page
+        if (courseId) {
+          navigate(`/courses/${courseId}/edit`);
+        } else {
+          navigate("/courses");
+        }
+      } catch (error) {
+        console.error("Error creating lesson:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create lesson. Please try again.",
+        });
+      }
+    },
+    [sectionId, courseId, createLessonMutation, navigate, toast]
+  );
+
+  // Handle Listening lesson form submission
+  const handleListeningLessonSubmit = useCallback(
+    async (data: ListeningLessonFormData) => {
+      if (!sectionId) return;
+
+      // Build the lesson content from form data
+      const content = {
+        audioUrl: data.audioUrl,
+        duration: data.duration,
+        transcript: data.transcript,
+        showTranscript: data.showTranscript,
+        questions: data.questions,
+        vocabulary: data.vocabulary || [],
+      };
+
+      // Get existing lessons count for order
+      try {
+        const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
+        const newOrder = lessonsResponse.data.length;
+
+        // Duration in minutes (audio duration is in seconds)
+        const durationMinutes =
+          Math.ceil(data.duration / 60) +
+          Math.ceil(data.questions.length * 0.5);
+
+        const createData: CreateLessonInput = {
+          title: data.title,
+          lessonType: "LISTENING",
+          content: JSON.stringify(content),
+          orderIndex: newOrder,
+          durationMinutes: durationMinutes,
+        };
+
+        await createLessonMutation.mutateAsync({
+          sectionId,
+          data: createData,
+        });
+
+        toast({
+          title: "Lesson Created",
+          description: `"${data.title}" has been created successfully.`,
+        });
+
+        // Navigate back to course edit page
+        if (courseId) {
+          navigate(`/courses/${courseId}/edit`);
+        } else {
+          navigate("/courses");
+        }
+      } catch (error) {
+        console.error("Error creating lesson:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create lesson. Please try again.",
+        });
+      }
+    },
+    [sectionId, courseId, createLessonMutation, navigate, toast]
+  );
+
+  // Handle Quiz lesson form submission
+  const handleQuizLessonSubmit = useCallback(
+    async (data: QuizLessonFormData) => {
+      if (!sectionId) return;
+
+      // Build the lesson content from form data
+      const content = {
+        title: data.quizTitle || "",
+        instructions: data.instructions || "",
+        timeLimit: data.timeLimit || undefined,
+        passingScore: data.passingScore,
+        questions: data.questions,
+      };
+
+      // Get existing lessons count for order
+      try {
+        const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
+        const newOrder = lessonsResponse.data.length;
+
+        // Calculate duration based on questions or time limit
+        const durationMinutes = data.timeLimit
+          ? Math.ceil(data.timeLimit / 60)
+          : calculateQuizDuration(data.questions);
+
+        const createData: CreateLessonInput = {
+          title: data.title,
+          lessonType: "QUIZ",
+          content: JSON.stringify(content),
+          orderIndex: newOrder,
+          durationMinutes: durationMinutes,
+        };
+
+        await createLessonMutation.mutateAsync({
+          sectionId,
+          data: createData,
+        });
+
+        toast({
+          title: "Lesson Created",
+          description: `"${data.title}" has been created successfully.`,
+        });
+
+        // Navigate back to course edit page
+        if (courseId) {
+          navigate(`/courses/${courseId}/edit`);
+        } else {
+          navigate("/courses");
+        }
+      } catch (error) {
+        console.error("Error creating lesson:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create lesson. Please try again.",
+        });
+      }
+    },
+    [sectionId, courseId, createLessonMutation, navigate, toast]
+  );
+
+  // Handle Speaking lesson form submission
+  const handleSpeakingLessonSubmit = useCallback(
+    async (data: SpeakingLessonFormData) => {
+      if (!sectionId) return;
+
+      // Build the lesson content from form data
+      const content = {
+        scenario: data.scenario,
+        difficulty: data.difficulty,
+        prompts: data.prompts,
+        rolePlaySettings: data.rolePlaySettings || undefined,
+      };
+
+      // Get existing lessons count for order
+      try {
+        const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
+        const newOrder = lessonsResponse.data.length;
+
+        // Calculate duration based on prompts and role-play settings
+        const durationMinutes = calculateSpeakingDuration(
+          data.prompts,
+          data.rolePlaySettings?.turns
+        );
+
+        const createData: CreateLessonInput = {
+          title: data.title,
+          lessonType: "SPEAKING",
+          content: JSON.stringify(content),
+          orderIndex: newOrder,
+          durationMinutes: durationMinutes,
         };
 
         await createLessonMutation.mutateAsync({
@@ -438,9 +607,39 @@ export default function LessonCreatePage() {
         />
       )}
 
+      {step === "edit-content" && selectedType === "LISTENING" && (
+        <ListeningLessonEditor
+          onSubmit={handleListeningLessonSubmit}
+          onBack={() => setStep("select-type")}
+          isSubmitting={createLessonMutation.isPending}
+          submitLabel="Create Lesson"
+        />
+      )}
+
+      {step === "edit-content" && selectedType === "QUIZ" && (
+        <QuizLessonEditor
+          onSubmit={handleQuizLessonSubmit}
+          onBack={() => setStep("select-type")}
+          isSubmitting={createLessonMutation.isPending}
+          submitLabel="Create Lesson"
+        />
+      )}
+
+      {step === "edit-content" && selectedType === "SPEAKING" && (
+        <SpeakingLessonEditor
+          onSubmit={handleSpeakingLessonSubmit}
+          onBack={() => setStep("select-type")}
+          isSubmitting={createLessonMutation.isPending}
+          submitLabel="Create Lesson"
+        />
+      )}
+
       {step === "edit-content" &&
         selectedType &&
-        selectedType !== "READING" && (
+        selectedType !== "READING" &&
+        selectedType !== "LISTENING" &&
+        selectedType !== "QUIZ" &&
+        selectedType !== "SPEAKING" && (
           <Card>
             <CardContent className="pt-6">
               <div className="text-center py-12">

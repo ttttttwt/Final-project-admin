@@ -332,6 +332,7 @@ export function SectionManager({ courseId, onAddLesson }: SectionManagerProps) {
                 >
                   <SectionItem
                     section={section}
+                    courseId={courseId}
                     isDragging={draggedIndex === index}
                     onEdit={handleEditClick}
                     onDelete={handleDeleteClick}

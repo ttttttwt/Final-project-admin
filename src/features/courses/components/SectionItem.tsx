@@ -1,6 +1,6 @@
 /**
  * Section Item Component
- * Displays a single section with actions
+ * Displays a single section with actions and lessons list
  */
 
 import { useState } from "react";
@@ -10,17 +10,18 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
-  FileText,
-  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { LessonList } from "./LessonList";
 import type { Section } from "../types/course.types";
 
 interface SectionItemProps {
   /** Section data */
   section: Section;
+  /** Course ID for lesson navigation */
+  courseId: number;
   /** Whether the section is being dragged */
   isDragging?: boolean;
   /** Callback when edit button is clicked */
@@ -38,6 +39,7 @@ interface SectionItemProps {
  */
 export function SectionItem({
   section,
+  courseId,
   isDragging = false,
   onEdit,
   onDelete,
@@ -115,47 +117,14 @@ export function SectionItem({
         </div>
       </div>
 
-      {/* Expanded Content - Lessons Placeholder */}
+      {/* Expanded Content - Lessons List */}
       {isExpanded && (
         <div className="border-t px-4 py-3">
-          {section.lessonCount === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <FileText className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground mb-3">
-                No lessons in this section yet.
-              </p>
-              {onAddLesson && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAddLesson(section.id)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add First Lesson
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                This section contains {section.lessonCount}{" "}
-                {section.lessonCount === 1 ? "lesson" : "lessons"}.
-              </p>
-              {onAddLesson && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAddLesson(section.id)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Lesson
-                </Button>
-              )}
-              <p className="text-xs text-muted-foreground italic">
-                Lesson management will be available in the next update.
-              </p>
-            </div>
-          )}
+          <LessonList
+            sectionId={section.id}
+            courseId={courseId}
+            onAddLesson={onAddLesson}
+          />
         </div>
       )}
     </div>
