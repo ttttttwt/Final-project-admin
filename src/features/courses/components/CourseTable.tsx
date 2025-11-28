@@ -93,6 +93,11 @@ export function CourseTable({
   const publishMutation = usePublishCourse();
   const unpublishMutation = useUnpublishCourse();
 
+  // Handle row click - navigate to preview
+  const handleRowClick = (course: Course) => {
+    navigate(`/courses/${course.id}/preview`);
+  };
+
   // Handle delete click
   const handleDeleteClick = (course: Course) => {
     if (course.isPublished) {
@@ -269,52 +274,56 @@ export function CourseTable({
       accessorKey: "actions",
       header: "Actions",
       cell: (course) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigate(`/courses/${course.id}/preview`)}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigate(`/courses/${course.id}/edit`)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleTogglePublishClick(course)}>
-              {course.isPublished ? (
-                <>
-                  <GlobeLock className="mr-2 h-4 w-4" />
-                  Unpublish
-                </>
-              ) : (
-                <>
-                  <Globe className="mr-2 h-4 w-4" />
-                  Publish
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => handleDeleteClick(course)}
-              disabled={course.isPublished}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigate(`/courses/${course.id}/preview`)}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate(`/courses/${course.id}/edit`)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleTogglePublishClick(course)}
+              >
+                {course.isPublished ? (
+                  <>
+                    <GlobeLock className="mr-2 h-4 w-4" />
+                    Unpublish
+                  </>
+                ) : (
+                  <>
+                    <Globe className="mr-2 h-4 w-4" />
+                    Publish
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleDeleteClick(course)}
+                disabled={course.isPublished}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ];
@@ -328,6 +337,7 @@ export function CourseTable({
         onPaginationChange={onPaginationChange}
         isLoading={isLoading}
         emptyMessage="No courses found. Create your first course to get started."
+        onRowClick={handleRowClick}
       />
 
       {/* Delete Confirmation Dialog */}

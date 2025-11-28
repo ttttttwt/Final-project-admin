@@ -5,6 +5,8 @@ import {
   BookOpen,
   Activity,
   LogOut,
+  Settings,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -39,6 +41,12 @@ export default function Sidebar() {
       icon: Activity,
       show: isAdmin,
     },
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: Settings,
+      show: isAdmin,
+    },
   ];
 
   return (
@@ -71,20 +79,26 @@ export default function Sidebar() {
         </nav>
       </div>
       <div className="border-t p-4">
-        <div className="flex items-center gap-3 px-3 py-2">
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 mb-2 transition-all hover:text-primary",
+              isActive ? "bg-muted text-primary" : "text-muted-foreground"
+            )
+          }
+        >
+          <User className="h-4 w-4" />
           <div className="flex flex-col">
             <span className="text-sm font-medium">
               {user?.fullName || "User"}
             </span>
             <span className="text-xs text-muted-foreground">{user?.email}</span>
-            <span className="text-xs text-muted-foreground capitalize">
-              {user?.role?.toLowerCase()}
-            </span>
           </div>
-        </div>
+        </NavLink>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 mt-2"
+          className="w-full justify-start gap-2"
           onClick={logout}
         >
           <LogOut className="h-4 w-4" />

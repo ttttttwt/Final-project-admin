@@ -68,6 +68,8 @@ interface DataTableProps<T> {
   getRowId?: (row: T) => string | number;
   /** Empty state message */
   emptyMessage?: string;
+  /** Callback when a row is clicked */
+  onRowClick?: (row: T) => void;
 }
 
 /**
@@ -92,6 +94,7 @@ export function DataTable<T>({
   isLoading = false,
   getRowId,
   emptyMessage = "No results found.",
+  onRowClick,
 }: DataTableProps<T>) {
   const pageSizeOptions = [10, 25, 50];
 
@@ -188,7 +191,13 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               data.map((row, index) => (
-                <TableRow key={getRowKey(row, index)}>
+                <TableRow
+                  key={getRowKey(row, index)}
+                  className={
+                    onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
+                  }
+                  onClick={() => onRowClick?.(row)}
+                >
                   {columns.map((column) => (
                     <TableCell
                       key={String(column.accessorKey)}

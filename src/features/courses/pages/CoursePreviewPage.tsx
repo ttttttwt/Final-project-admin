@@ -12,6 +12,13 @@ import {
   Loader2,
   BookOpen,
   FileText,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Headphones,
+  ClipboardCheck,
+  Mic,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -34,6 +41,10 @@ import { useSections } from "../hooks/useSections";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useState } from "react";
+import { useLessonsBySection } from "@/features/lessons/hooks/useLessons";
+import { LessonPreviewDialog } from "@/features/lessons/components/LessonPreviewDialog";
+import type { Lesson, LessonType } from "@/features/lessons/types/lesson.types";
+import type { Section } from "../types/course.types";
 
 /** CEFR level descriptions */
 const cefrDescriptions: Record<string, string> = {
@@ -44,6 +55,169 @@ const cefrDescriptions: Record<string, string> = {
   C1: "Advanced - Can use language flexibly for social, academic and professional purposes",
   C2: "Proficiency - Can understand virtually everything and express themselves spontaneously",
 };
+
+/** Get icon component for lesson type */
+const getLessonTypeIcon = (type: LessonType) => {
+  switch (type) {
+    case "READING":
+      return <BookOpen className="h-4 w-4" />;
+    case "LISTENING":
+      return <Headphones className="h-4 w-4" />;
+    case "QUIZ":
+      return <ClipboardCheck className="h-4 w-4" />;
+    case "SPEAKING":
+      return <Mic className="h-4 w-4" />;
+  }
+};
+
+/** Get color class for lesson type badge */
+const getLessonTypeColor = (type: LessonType): string => {
+  switch (type) {
+    case "READING":
+      return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+    case "LISTENING":
+      return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
+    case "QUIZ":
+      return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+    case "SPEAKING":
+      return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+  }
+};
+
+/** Section with expandable lessons list */
+function SectionWithLessons({
+  section,
+  index,
+  onPreviewLesson,
+  onEditLesson,
+}: {
+  section: Section;
+  index: number;
+  onPreviewLesson: (lesson: Lesson) => void;
+  onEditLesson: (lessonId: number) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { data: lessons, isLoading } = useLessonsBySection(section.id);
+
+  return (
+    <div className="rounded-lg border">
+      {/* Section Header - Clickable to expand */}
+      <button
+        type="button"
+        className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left"
+        onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+          {index + 1}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{section.title}</p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <FileText className="h-4 w-4" />
+            <span>
+              {section.lessonCount} lesson
+              {section.lessonCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="shrink-0">
+            Section {index + 1}
+          </Badge>
+          {isExpanded ? (
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
+      </button>
+
+      {/* Lessons List - Expandable */}
+      {isExpanded && (
+        <div className="border-t bg-muted/20">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">
+                Loading lessons...
+              </span>
+            </div>
+          ) : !lessons || lessons.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                No lessons in this section yet.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {lessons
+                .sort((a, b) => a.orderIndex - b.orderIndex)
+                .map((lesson, lessonIndex) => (
+                  <div
+                    key={lesson.id}
+                    className="flex items-center gap-4 p-4 pl-8 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    onClick={() => onPreviewLesson(lesson)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onPreviewLesson(lesson);
+                      }
+                    }}
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                      {lessonIndex + 1}
+                    </span>
+                    <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                      {getLessonTypeIcon(lesson.lessonType)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {lesson.title}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs ${getLessonTypeColor(
+                            lesson.lessonType
+                          )}`}
+                        >
+                          {lesson.lessonType}
+                        </Badge>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {lesson.durationMinutes} min
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        Click to preview
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditLesson(lesson.id);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * CoursePreviewPage - Preview page for a course
@@ -70,6 +244,19 @@ export default function CoursePreviewPage() {
 
   // Publish dialog state
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+
+  // Lesson preview dialog state
+  const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null);
+  const [isLessonPreviewOpen, setIsLessonPreviewOpen] = useState(false);
+
+  const handleEditLesson = (lessonId: number) => {
+    navigate(`/lessons/${lessonId}/edit`);
+  };
+
+  const handlePreviewLesson = (lesson: Lesson) => {
+    setPreviewLesson(lesson);
+    setIsLessonPreviewOpen(true);
+  };
 
   const handleTogglePublish = () => {
     setIsPublishDialogOpen(true);
@@ -304,27 +491,13 @@ export default function CoursePreviewPage() {
           ) : (
             <div className="space-y-3">
               {sections.map((section, index) => (
-                <div
+                <SectionWithLessons
                   key={section.id}
-                  className="flex items-center gap-4 rounded-lg border p-4"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{section.title}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <FileText className="h-4 w-4" />
-                      <span>
-                        {section.lessonCount} lesson
-                        {section.lessonCount !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="shrink-0">
-                    Section {index + 1}
-                  </Badge>
-                </div>
+                  section={section}
+                  index={index}
+                  onPreviewLesson={handlePreviewLesson}
+                  onEditLesson={handleEditLesson}
+                />
               ))}
             </div>
           )}
@@ -370,6 +543,13 @@ export default function CoursePreviewPage() {
         onConfirm={handlePublishConfirm}
         variant={course.isPublished ? "destructive" : "default"}
         isLoading={publishCourse.isPending || unpublishCourse.isPending}
+      />
+
+      {/* Lesson Preview Dialog */}
+      <LessonPreviewDialog
+        open={isLessonPreviewOpen}
+        onOpenChange={setIsLessonPreviewOpen}
+        lesson={previewLesson}
       />
     </div>
   );

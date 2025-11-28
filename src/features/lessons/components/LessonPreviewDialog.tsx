@@ -303,23 +303,72 @@ function ListeningLessonPreview({
             Questions ({content.questions?.length || 0})
           </CardTitle>
         </CardHeader>
-        <CardContent className="py-3 space-y-3 max-h-[200px] overflow-y-auto">
+        <CardContent className="py-3 space-y-3 max-h-[350px] overflow-y-auto">
           {content.questions?.map((question, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
-            >
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium shrink-0">
-                {index + 1}
-              </span>
-              <div>
-                <p className="text-sm font-medium">{question.question}</p>
-                {question.timestamp && (
-                  <span className="text-xs text-muted-foreground">
-                    at {formatDuration(question.timestamp)}
-                  </span>
-                )}
+            <div key={index} className="p-3 border rounded-lg space-y-2">
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium shrink-0">
+                  {index + 1}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{question.question}</p>
+                  {question.timestamp !== undefined && (
+                    <span className="text-xs text-muted-foreground">
+                      at {formatDuration(question.timestamp)}
+                    </span>
+                  )}
+                </div>
               </div>
+              {/* Show answer options if available */}
+              {question.options && question.options.length > 0 && (
+                <div className="pl-9 space-y-1">
+                  {question.options.map((option, optIndex) => {
+                    const isCorrect =
+                      question.correctAnswer === optIndex ||
+                      question.correctAnswer === String(optIndex) ||
+                      question.correctAnswer === option;
+                    return (
+                      <div
+                        key={optIndex}
+                        className={`flex items-center gap-2 text-sm p-2 rounded ${
+                          isCorrect
+                            ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                            : "bg-muted/30"
+                        }`}
+                      >
+                        {isCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span
+                          className={`${
+                            isCorrect
+                              ? "font-medium text-green-700 dark:text-green-400"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {option}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Show correct answer for non-multiple-choice questions */}
+              {(!question.options || question.options.length === 0) &&
+                question.correctAnswer !== undefined && (
+                  <div className="pl-9">
+                    <div className="p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                          Answer: {String(question.correctAnswer)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
             </div>
           ))}
           {(!content.questions || content.questions.length === 0) && (
@@ -388,7 +437,7 @@ function QuizLessonPreview({ content }: { content: QuizLessonContent }) {
             Questions ({content.questions?.length || 0})
           </CardTitle>
         </CardHeader>
-        <CardContent className="py-3 space-y-3 max-h-[300px] overflow-y-auto">
+        <CardContent className="py-3 space-y-3 max-h-[400px] overflow-y-auto">
           {content.questions?.map((question, index) => (
             <div key={index} className="p-3 border rounded-lg space-y-2">
               <div className="flex items-start justify-between">
@@ -404,14 +453,135 @@ function QuizLessonPreview({ content }: { content: QuizLessonContent }) {
                 </div>
                 <Badge variant="secondary">{question.points || 1} pt</Badge>
               </div>
-              <div className="pl-9">
+              <div className="pl-9 space-y-2">
                 {question.type && (
                   <Badge variant="outline" className="text-xs">
                     {String(question.type).replace("_", " ")}
                   </Badge>
                 )}
+                {/* Show answer options for multiple choice */}
+                {question.type === "multiple_choice" && question.options && (
+                  <div className="space-y-1 mt-2">
+                    {question.options.map((option, optIndex) => (
+                      <div
+                        key={optIndex}
+                        className={`flex items-center gap-2 text-sm p-2 rounded ${
+                          question.correctAnswer === optIndex ||
+                          question.correctAnswer === String(optIndex)
+                            ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                            : "bg-muted/30"
+                        }`}
+                      >
+                        {question.correctAnswer === optIndex ||
+                        question.correctAnswer === String(optIndex) ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span
+                          className={`${
+                            question.correctAnswer === optIndex ||
+                            question.correctAnswer === String(optIndex)
+                              ? "font-medium text-green-700 dark:text-green-400"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {option}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Show answer for true/false */}
+                {question.type === "true_false" &&
+                  (() => {
+                    const isTrue =
+                      question.correctAnswer === "true" ||
+                      question.correctAnswer === 0 ||
+                      String(question.correctAnswer).toLowerCase() === "true";
+                    const isFalse =
+                      question.correctAnswer === "false" ||
+                      question.correctAnswer === 1 ||
+                      String(question.correctAnswer).toLowerCase() === "false";
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <div
+                          className={`flex items-center gap-2 text-sm p-2 rounded ${
+                            isTrue
+                              ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                              : "bg-muted/30"
+                          }`}
+                        >
+                          {isTrue ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span
+                            className={`${
+                              isTrue
+                                ? "font-medium text-green-700 dark:text-green-400"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            True
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center gap-2 text-sm p-2 rounded ${
+                            isFalse
+                              ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                              : "bg-muted/30"
+                          }`}
+                        >
+                          {isFalse ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span
+                            className={`${
+                              isFalse
+                                ? "font-medium text-green-700 dark:text-green-400"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            False
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                {/* Show answer for fill in the blank */}
+                {question.type === "fill_blank" && question.correctAnswer && (
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                        Answer:{" "}
+                        {Array.isArray(question.correctAnswer)
+                          ? question.correctAnswer.join(", ")
+                          : String(question.correctAnswer)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {/* Show answer for matching type */}
+                {question.type === "matching" && question.correctAnswer && (
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                        Matches:{" "}
+                        {Array.isArray(question.correctAnswer)
+                          ? question.correctAnswer.join(", ")
+                          : String(question.correctAnswer)}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {question.hint && (
-                  <p className="text-xs text-muted-foreground mt-1 italic">
+                  <p className="text-xs text-muted-foreground mt-2 italic">
                     Hint: {question.hint}
                   </p>
                 )}
