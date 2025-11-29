@@ -4,11 +4,18 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { healthApi, aiUsageApi } from "../api/monitoringApi";
+import {
+  healthApi,
+  aiUsageApi,
+  activityLogsApi,
+  auditLogsApi,
+} from "../api/monitoringApi";
 import type {
   AIUsageLogsSearchParams,
   AIUsageStatsPeriod,
   SystemMetrics,
+  AdminActivityLogsSearchParams,
+  AuditLogsSearchParams,
 } from "../types";
 import { toast } from "@/hooks/use-toast";
 
@@ -22,6 +29,16 @@ const MONITORING_KEYS = {
     ["monitoring", "ai-usage", params] as const,
   aiUsageStats: (period: AIUsageStatsPeriod) =>
     ["monitoring", "ai-usage", "stats", period] as const,
+  activityLogs: (params: AdminActivityLogsSearchParams) =>
+    ["monitoring", "activity-logs", params] as const,
+  activityStats: (period: string) =>
+    ["monitoring", "activity-logs", "stats", period] as const,
+  activityActions: ["monitoring", "activity-logs", "actions"] as const,
+  activityUsers: ["monitoring", "activity-logs", "users"] as const,
+  auditLogs: (params: AuditLogsSearchParams) =>
+    ["monitoring", "audit-logs", params] as const,
+  auditActions: ["monitoring", "audit-logs", "actions"] as const,
+  auditEntityTypes: ["monitoring", "audit-logs", "entity-types"] as const,
 };
 
 /**
@@ -212,7 +229,166 @@ export const useInvalidateMonitoring = () => {
       queryClient.invalidateQueries({ queryKey: MONITORING_KEYS.metrics }),
     invalidateAIUsage: () =>
       queryClient.invalidateQueries({ queryKey: ["monitoring", "ai-usage"] }),
+    invalidateActivityLogs: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["monitoring", "activity-logs"],
+      }),
+    invalidateAuditLogs: () =>
+      queryClient.invalidateQueries({ queryKey: ["monitoring", "audit-logs"] }),
     invalidateAll: () =>
       queryClient.invalidateQueries({ queryKey: ["monitoring"] }),
   };
+};
+
+// ===================================================================
+// ADMIN ACTIVITY LOGS HOOKS
+// ===================================================================
+
+/**
+ * Hook to fetch admin activity logs
+ */
+export const useActivityLogs = (params: AdminActivityLogsSearchParams) => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.activityLogs(params),
+    queryFn: () => activityLogsApi.getLogs(params),
+    staleTime: 60 * 1000, // 1 minute
+  });
+};
+
+/**
+ * Hook to fetch admin activity statistics
+ */
+export const useActivityStats = (period: string = "today") => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.activityStats(period),
+    queryFn: () => activityLogsApi.getStats(period),
+    staleTime: 60 * 1000, // 1 minute
+  });
+};
+
+/**
+ * Hook to fetch distinct action types for filtering
+ */
+export const useActivityActions = () => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.activityActions,
+    queryFn: () => activityLogsApi.getDistinctActions(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook to fetch distinct user names for filtering
+ */
+export const useActivityUsers = () => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.activityUsers,
+    queryFn: () => activityLogsApi.getDistinctUserNames(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook to export activity logs to CSV
+ */
+export const useExportActivityLogs = () => {
+  return useMutation({
+    mutationFn: (params: AdminActivityLogsSearchParams) =>
+      activityLogsApi.exportCsv(params),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `activity-logs-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: "Activity logs have been exported to CSV.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export activity logs.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// ===================================================================
+// AUDIT LOGS HOOKS
+// ===================================================================
+
+/**
+ * Hook to fetch audit logs
+ */
+export const useAuditLogs = (params: AuditLogsSearchParams) => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.auditLogs(params),
+    queryFn: () => auditLogsApi.getLogs(params),
+    staleTime: 60 * 1000, // 1 minute
+  });
+};
+
+/**
+ * Hook to fetch distinct action types for filtering
+ */
+export const useAuditActions = () => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.auditActions,
+    queryFn: () => auditLogsApi.getDistinctActions(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook to fetch distinct entity types for filtering
+ */
+export const useAuditEntityTypes = () => {
+  return useQuery({
+    queryKey: MONITORING_KEYS.auditEntityTypes,
+    queryFn: () => auditLogsApi.getDistinctEntityTypes(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook to export audit logs to CSV
+ */
+export const useExportAuditLogs = () => {
+  return useMutation({
+    mutationFn: (params: AuditLogsSearchParams) =>
+      auditLogsApi.exportCsv(params),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-logs-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: "Audit logs have been exported to CSV.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export audit logs.",
+        variant: "destructive",
+      });
+    },
+  });
 };

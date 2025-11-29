@@ -13,6 +13,12 @@ import type {
   AIUsageLogsSearchParams,
   AIUsageStats,
   AIUsageStatsPeriod,
+  AdminActivityLogsResponse,
+  AdminActivityLogsSearchParams,
+  AdminActivityStats,
+  AdminActionType,
+  AuditLogsResponse,
+  AuditLogsSearchParams,
 } from "../types";
 
 // Actuator base URL (different from main API)
@@ -126,4 +132,110 @@ export const aiUsageApi = {
   },
 };
 
-export default { healthApi, aiUsageApi };
+/**
+ * Admin Activity Logs API
+ */
+export const activityLogsApi = {
+  /**
+   * Get paginated admin activity logs
+   */
+  getLogs: async (
+    params: AdminActivityLogsSearchParams
+  ): Promise<AdminActivityLogsResponse> => {
+    const response = await api.get<AdminActivityLogsResponse>(
+      "/admin/activity-logs",
+      {
+        params,
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get admin activity summary statistics
+   */
+  getStats: async (period: string = "today"): Promise<AdminActivityStats> => {
+    const response = await api.get<AdminActivityStats>(
+      "/admin/activity-logs/stats",
+      {
+        params: { period },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Export activity logs to CSV
+   */
+  exportCsv: async (params: AdminActivityLogsSearchParams): Promise<Blob> => {
+    const response = await api.get("/admin/activity-logs/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  /**
+   * Get distinct action types that have logs
+   */
+  getDistinctActions: async (): Promise<AdminActionType[]> => {
+    const response = await api.get<AdminActionType[]>(
+      "/admin/activity-logs/actions"
+    );
+    return response.data;
+  },
+
+  /**
+   * Get distinct user names that have logs
+   */
+  getDistinctUserNames: async (): Promise<string[]> => {
+    const response = await api.get<string[]>("/admin/activity-logs/users");
+    return response.data;
+  },
+};
+
+/**
+ * Audit Logs API
+ */
+export const auditLogsApi = {
+  /**
+   * Get paginated audit logs
+   */
+  getLogs: async (
+    params: AuditLogsSearchParams
+  ): Promise<AuditLogsResponse> => {
+    const response = await api.get<AuditLogsResponse>("/admin/audit-logs", {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * Export audit logs to CSV
+   */
+  exportCsv: async (params: AuditLogsSearchParams): Promise<Blob> => {
+    const response = await api.get("/admin/audit-logs/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  /**
+   * Get distinct action types that have logs
+   */
+  getDistinctActions: async (): Promise<string[]> => {
+    const response = await api.get<string[]>("/admin/audit-logs/actions");
+    return response.data;
+  },
+
+  /**
+   * Get distinct entity types that have logs
+   */
+  getDistinctEntityTypes: async (): Promise<string[]> => {
+    const response = await api.get<string[]>("/admin/audit-logs/entity-types");
+    return response.data;
+  },
+};
+
+export default { healthApi, aiUsageApi, activityLogsApi, auditLogsApi };

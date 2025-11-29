@@ -5,7 +5,7 @@
 
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Activity, Bot } from "lucide-react";
+import { Activity, Bot, ClipboardList, FileText } from "lucide-react";
 
 const monitoringLinks = [
   {
@@ -17,6 +17,16 @@ const monitoringLinks = [
     title: "AI Usage Logs",
     href: "/monitoring/ai-usage",
     icon: Bot,
+  },
+  {
+    title: "Activity Logs",
+    href: "/monitoring/activity-logs",
+    icon: ClipboardList,
+  },
+  {
+    title: "Audit Logs",
+    href: "/monitoring/audit-logs",
+    icon: FileText,
   },
 ];
 

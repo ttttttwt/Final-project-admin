@@ -190,3 +190,150 @@ export interface AIUsageStats {
   period: AIUsageStatsPeriod;
   stats: AIUsageSummary;
 }
+
+// ===================================================================
+// ADMIN ACTIVITY LOGS TYPES
+// ===================================================================
+
+/**
+ * Action types for admin activities
+ */
+export type AdminActionType =
+  | "COURSE_CREATED"
+  | "COURSE_UPDATED"
+  | "COURSE_PUBLISHED"
+  | "COURSE_UNPUBLISHED"
+  | "COURSE_DELETED"
+  | "SECTION_CREATED"
+  | "SECTION_UPDATED"
+  | "SECTION_DELETED"
+  | "LESSON_CREATED"
+  | "LESSON_UPDATED"
+  | "LESSON_DELETED";
+
+/**
+ * Entity types for admin activities
+ */
+export type AdminEntityType = "COURSE" | "SECTION" | "LESSON";
+
+/**
+ * Admin activity log entry
+ */
+export interface AdminActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  action: AdminActionType;
+  entityType: AdminEntityType;
+  entityId: string;
+  entityName: string;
+  description: string;
+  details?: string;
+  createdAt: string;
+}
+
+/**
+ * Admin activity logs search parameters
+ */
+export interface AdminActivityLogsSearchParams {
+  page?: number;
+  size?: number;
+  action?: AdminActionType;
+  entityType?: AdminEntityType;
+  userId?: string;
+  userName?: string;
+  entityName?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+}
+
+/**
+ * Paginated admin activity logs response
+ */
+export interface AdminActivityLogsResponse {
+  content: AdminActivityLog[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+/**
+ * Admin activity logs stats summary
+ */
+export interface AdminActivityStatsSummary {
+  totalActivities: number;
+  activitiesByAction: Record<string, number>;
+  activitiesByEntityType: Record<string, number>;
+  activitiesByUser: Record<string, number>;
+  topActiveUsers: Record<string, number>;
+}
+
+/**
+ * Admin activity logs stats response
+ */
+export interface AdminActivityStats {
+  period: string;
+  stats: AdminActivityStatsSummary;
+}
+
+// ===================================================================
+// AUDIT LOGS TYPES
+// ===================================================================
+
+/**
+ * Audit log entry
+ */
+export interface AuditLog {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  changes?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+/**
+ * Audit logs search parameters
+ */
+export interface AuditLogsSearchParams {
+  page?: number;
+  size?: number;
+  action?: string;
+  entityType?: string;
+  userId?: string;
+  userEmail?: string;
+  ipAddress?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+}
+
+/**
+ * Paginated audit logs response
+ */
+export interface AuditLogsResponse {
+  content: AuditLog[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
