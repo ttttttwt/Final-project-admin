@@ -7,6 +7,7 @@ import {
   LogOut,
   Settings,
   User,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -39,6 +40,12 @@ export default function Sidebar() {
       title: "Monitoring",
       href: "/monitoring/health",
       icon: Activity,
+      show: isAdmin,
+    },
+    {
+      title: "Notifications",
+      href: "/notifications",
+      icon: Bell,
       show: isAdmin,
     },
     {
