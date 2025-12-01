@@ -62,6 +62,8 @@ export interface Lesson {
   durationMinutes: number;
   createdAt: string;
   updatedAt: string;
+  /** URL to uploaded audio file (for LISTENING lessons) */
+  audioUrl?: string;
 }
 
 /** Input for creating a new lesson */

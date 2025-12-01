@@ -109,4 +109,29 @@ export const lessonsApi = {
       return null;
     }
   },
+
+  /**
+   * Upload audio file for a LISTENING lesson
+   * @param id Lesson ID
+   * @param file Audio file (MP3, WAV, OGG, M4A, max 50MB)
+   */
+  uploadAudio: async (id: number, file: File): Promise<Lesson> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post<Lesson>(`/lessons/${id}/audio`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete audio file for a lesson
+   */
+  deleteAudio: async (id: number): Promise<Lesson> => {
+    const response = await api.delete<Lesson>(`/lessons/${id}/audio`);
+    return response.data;
+  },
 };

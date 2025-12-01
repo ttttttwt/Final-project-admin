@@ -87,4 +87,33 @@ export const coursesApi = {
     const response = await api.post<Course>(`/courses/${id}/unpublish`);
     return response.data;
   },
+
+  /**
+   * Upload course thumbnail image
+   * @param id Course ID
+   * @param file Image file (JPG, PNG, WebP, max 5MB)
+   */
+  uploadThumbnail: async (id: number, file: File): Promise<Course> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post<Course>(
+      `/courses/${id}/thumbnail`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete course thumbnail image
+   */
+  deleteThumbnail: async (id: number): Promise<Course> => {
+    const response = await api.delete<Course>(`/courses/${id}/thumbnail`);
+    return response.data;
+  },
 };
