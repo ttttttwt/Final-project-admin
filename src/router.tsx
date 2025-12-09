@@ -18,6 +18,7 @@ import AIUsageLogsPage from "@/features/monitoring/pages/AIUsageLogsPage";
 import ActivityLogsPage from "@/features/monitoring/pages/ActivityLogsPage";
 import AuditLogsPage from "@/features/monitoring/pages/AuditLogsPage";
 import { NotificationsPage } from "@/features/notifications";
+import { EmailManagementPage } from "@/features/emails";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/settings/pages/SettingsPage";
 import ForbiddenPage from "@/features/auth/pages/ForbiddenPage";
@@ -128,6 +129,14 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <NotificationsPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "emails",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <EmailManagementPage />
           </RoleGuard>
         ),
       },

@@ -8,6 +8,7 @@ import {
   Settings,
   User,
   Bell,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -46,6 +47,12 @@ export default function Sidebar() {
       title: "Notifications",
       href: "/notifications",
       icon: Bell,
+      show: isAdmin,
+    },
+    {
+      title: "Emails",
+      href: "/emails",
+      icon: Mail,
       show: isAdmin,
     },
     {
