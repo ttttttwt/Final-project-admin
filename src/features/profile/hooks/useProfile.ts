@@ -95,7 +95,7 @@ export const useChangePassword = () => {
 };
 
 /**
- * Hook to upload avatar
+ * Hook to upload avatar (file)
  */
 export const useUploadAvatar = () => {
   const queryClient = useQueryClient();
@@ -112,6 +112,47 @@ export const useUploadAvatar = () => {
           {
             ...user,
             avatarUrl: updatedProfile.avatarUrl,
+          },
+          accessToken,
+          refreshToken
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully",
+      });
+    },
+    onError: (
+      error: Error & { response?: { data?: { message?: string } } }
+    ) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update avatar",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+/**
+ * Hook to upload avatar URL (from external URL)
+ */
+export const useUploadAvatarUrl = () => {
+  const queryClient = useQueryClient();
+  const { user, accessToken, refreshToken, login } = useAuthStore();
+
+  return useMutation({
+    mutationFn: (avatarUrl: string) => profileApi.uploadAvatarUrl(avatarUrl),
+    onSuccess: (_data, avatarUrl) => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+
+      // Update auth store with new avatar URL
+      if (user && accessToken && refreshToken) {
+        login(
+          {
+            ...user,
+            avatarUrl: avatarUrl,
           },
           accessToken,
           refreshToken

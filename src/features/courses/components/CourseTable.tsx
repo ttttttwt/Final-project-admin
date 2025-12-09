@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { getImageUrl } from "@/lib/utils";
 
 interface CourseTableProps {
   courses: Course[];
@@ -206,7 +207,7 @@ export function CourseTable({
         <div className="h-10 w-10 overflow-hidden rounded-md bg-muted">
           {course.thumbnailUrl ? (
             <img
-              src={course.thumbnailUrl}
+              src={getImageUrl(course.thumbnailUrl)}
               alt={course.title}
               className="h-full w-full object-cover"
               onError={(e) => {
@@ -271,6 +272,25 @@ export function CourseTable({
       ),
     },
     {
+      accessorKey: "edit",
+      header: "",
+      className: "w-20",
+      cell: (course) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/courses/${course.id}/edit`);
+          }}
+          className="h-8 px-2"
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          Edit
+        </Button>
+      ),
+    },
+    {
       accessorKey: "actions",
       header: "Actions",
       cell: (course) => (
@@ -289,12 +309,6 @@ export function CourseTable({
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Preview
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate(`/courses/${course.id}/edit`)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

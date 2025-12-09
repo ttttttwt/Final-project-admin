@@ -63,7 +63,7 @@ export const profileApi = {
   },
 
   /**
-   * Upload user avatar
+   * Upload user avatar (file upload)
    */
   uploadAvatar: async (file: File): Promise<ProfileResponse> => {
     const formData = new FormData();
@@ -79,6 +79,13 @@ export const profileApi = {
       }
     );
     return response.data;
+  },
+
+  /**
+   * Update user avatar (URL)
+   */
+  uploadAvatarUrl: async (avatarUrl: string): Promise<void> => {
+    await api.post("/users/profile/avatar", { avatarUrl });
   },
 
   /**

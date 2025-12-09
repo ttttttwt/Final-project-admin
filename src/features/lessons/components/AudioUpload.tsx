@@ -179,15 +179,6 @@ export function AudioUpload({
     setIsPlaying(false);
   };
 
-  /**
-   * Format file size
-   */
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   return (
     <div className="space-y-4">
       {/* Unified Audio Card */}

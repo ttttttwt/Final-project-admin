@@ -5,6 +5,7 @@ import {
   useUpdateProfile,
   useChangePassword,
   useUploadAvatar,
+  useUploadAvatarUrl,
   useDeleteAvatar,
 } from "../hooks/useProfile";
 import {
@@ -16,6 +17,7 @@ import type {
   ChangePasswordFormData,
 } from "../types/profile.schema";
 import { useAuthStore } from "@/store/authStore";
+import { getImageUrl } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -57,6 +59,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   User,
   Mail,
   Shield,
@@ -66,8 +74,9 @@ import {
   Loader2,
   Key,
   Link as LinkIcon,
+  Upload,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const LEVEL_OPTIONS = [
   { value: "BEGINNER", label: "Beginner" },
@@ -104,9 +113,13 @@ export default function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
   const uploadAvatar = useUploadAvatar();
+  const uploadAvatarUrl = useUploadAvatarUrl();
   const deleteAvatar = useDeleteAvatar();
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile form
   const profileForm = useForm<UpdateProfileFormData>({
@@ -174,12 +187,56 @@ export default function ProfilePage() {
 
   const handleAvatarUrlSubmit = () => {
     if (avatarUrl.trim()) {
-      uploadAvatar.mutate(avatarUrl, {
+      uploadAvatarUrl.mutate(avatarUrl, {
         onSuccess: () => {
           setAvatarDialogOpen(false);
           setAvatarUrl("");
         },
       });
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        return;
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleFileUpload = () => {
+    if (selectedFile) {
+      uploadAvatar.mutate(selectedFile, {
+        onSuccess: () => {
+          setAvatarDialogOpen(false);
+          setSelectedFile(null);
+          setPreviewUrl(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        },
+      });
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setAvatarDialogOpen(open);
+    if (!open) {
+      setAvatarUrl("");
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -250,7 +307,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={profile?.avatarUrl || user?.avatarUrl}
+                  src={getImageUrl(profile?.avatarUrl || user?.avatarUrl)}
                   alt={displayName}
                 />
                 <AvatarFallback className="text-lg">
@@ -261,7 +318,7 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <Dialog
                     open={avatarDialogOpen}
-                    onOpenChange={setAvatarDialogOpen}
+                    onOpenChange={handleDialogClose}
                   >
                     <DialogTrigger asChild>
                       <Button type="button" variant="outline" size="sm">
@@ -269,50 +326,103 @@ export default function ProfilePage() {
                         Change
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Update Avatar</DialogTitle>
                         <DialogDescription>
-                          Enter a URL for your new avatar image
+                          Upload a file or enter a URL for your avatar image
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="avatar-url">Avatar URL</Label>
-                          <div className="flex gap-2">
-                            <LinkIcon className="h-4 w-4 mt-3 text-muted-foreground" />
-                            <Input
-                              id="avatar-url"
-                              placeholder="https://example.com/avatar.jpg"
-                              value={avatarUrl}
-                              onChange={(e) => setAvatarUrl(e.target.value)}
-                            />
+                      <Tabs defaultValue="upload" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="upload">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload File
+                          </TabsTrigger>
+                          <TabsTrigger value="url">
+                            <LinkIcon className="h-4 w-4 mr-2" />
+                            Enter URL
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="upload" className="space-y-4 py-4">
+                          <div className="space-y-4">
+                            {/* Preview */}
+                            {previewUrl && (
+                              <div className="flex justify-center">
+                                <Avatar className="h-24 w-24">
+                                  <AvatarImage src={previewUrl} alt="Preview" />
+                                  <AvatarFallback>Preview</AvatarFallback>
+                                </Avatar>
+                              </div>
+                            )}
+                            {/* File Input */}
+                            <div className="space-y-2">
+                              <Label htmlFor="avatar-file">Select Image</Label>
+                              <Input
+                                ref={fileInputRef}
+                                id="avatar-file"
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleFileSelect}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Accepted: JPG, PNG, GIF, WebP. Max size: 5MB
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Enter a valid image URL (JPG, PNG, GIF)
-                          </p>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setAvatarDialogOpen(false);
-                            setAvatarUrl("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleAvatarUrlSubmit}
-                          disabled={!avatarUrl.trim() || uploadAvatar.isPending}
-                        >
-                          {uploadAvatar.isPending && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}
-                          Save
-                        </Button>
-                      </DialogFooter>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleDialogClose(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleFileUpload}
+                              disabled={!selectedFile || uploadAvatar.isPending}
+                            >
+                              {uploadAvatar.isPending && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              )}
+                              Upload
+                            </Button>
+                          </DialogFooter>
+                        </TabsContent>
+                        <TabsContent value="url" className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="avatar-url">Avatar URL</Label>
+                            <div className="flex gap-2">
+                              <LinkIcon className="h-4 w-4 mt-3 text-muted-foreground" />
+                              <Input
+                                id="avatar-url"
+                                placeholder="https://example.com/avatar.jpg"
+                                value={avatarUrl}
+                                onChange={(e) => setAvatarUrl(e.target.value)}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Enter a valid image URL (JPG, PNG, GIF)
+                            </p>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleDialogClose(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleAvatarUrlSubmit}
+                              disabled={!avatarUrl.trim() || uploadAvatarUrl.isPending}
+                            >
+                              {uploadAvatarUrl.isPending && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              )}
+                              Save
+                            </Button>
+                          </DialogFooter>
+                        </TabsContent>
+                      </Tabs>
                     </DialogContent>
                   </Dialog>
                   {(profile?.avatarUrl || user?.avatarUrl) && (
@@ -333,7 +443,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Enter a URL to an image (JPG, PNG, GIF)
+                  Upload an image or enter a URL (JPG, PNG, GIF)
                 </p>
               </div>
             </div>

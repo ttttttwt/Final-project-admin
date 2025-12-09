@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { getAbsoluteUrl } from "@/lib/utils";
@@ -25,7 +25,6 @@ interface ThumbnailUploadProps {
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088/api/v1';
 
 /**
  * ThumbnailUpload - Component for uploading course thumbnails
@@ -356,7 +355,7 @@ export function ThumbnailUpload({
         <DialogContent className="max-w-4xl">
           <div className="flex justify-center">
             <img
-              src={absoluteThumbnailUrl}
+              src={absoluteThumbnailUrl ?? undefined}
               alt="Course thumbnail preview"
               className="max-w-full max-h-[80vh] object-contain"
               onError={(e) => {

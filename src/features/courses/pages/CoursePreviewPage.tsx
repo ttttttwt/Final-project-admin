@@ -45,6 +45,7 @@ import { useLessonsBySection } from "@/features/lessons/hooks/useLessons";
 import { LessonPreviewDialog } from "@/features/lessons/components/LessonPreviewDialog";
 import type { Lesson, LessonType } from "@/features/lessons/types/lesson.types";
 import type { Section } from "../types/course.types";
+import { getImageUrl } from "@/lib/utils";
 
 /** CEFR level descriptions */
 const cefrDescriptions: Record<string, string> = {
@@ -388,7 +389,7 @@ export default function CoursePreviewPage() {
           <div className="relative h-64 bg-muted md:h-auto">
             {course.thumbnailUrl ? (
               <img
-                src={course.thumbnailUrl}
+                src={getImageUrl(course.thumbnailUrl)}
                 alt={course.title}
                 className="h-full w-full object-cover"
                 onError={(e) => {
