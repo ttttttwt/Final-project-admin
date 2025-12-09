@@ -96,16 +96,14 @@ export const useChangePassword = () => {
 
 /**
  * Hook to upload avatar
- * Note: This hook expects a URL string. For file upload, upload to a file storage
- * service first (e.g., Cloudinary, S3) and pass the resulting URL here.
  */
 export const useUploadAvatar = () => {
   const queryClient = useQueryClient();
   const { user, accessToken, refreshToken, login } = useAuthStore();
 
   return useMutation({
-    mutationFn: (avatarUrl: string) => profileApi.uploadAvatar(avatarUrl),
-    onSuccess: (_data, avatarUrl) => {
+    mutationFn: (file: File) => profileApi.uploadAvatar(file),
+    onSuccess: (updatedProfile) => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
 
       // Update auth store with new avatar URL
@@ -113,7 +111,7 @@ export const useUploadAvatar = () => {
         login(
           {
             ...user,
-            avatarUrl: avatarUrl,
+            avatarUrl: updatedProfile.avatarUrl,
           },
           accessToken,
           refreshToken

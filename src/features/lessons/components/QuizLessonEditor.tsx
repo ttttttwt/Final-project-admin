@@ -90,7 +90,7 @@ export function QuizLessonEditor({
     setValue,
     formState: { errors },
   } = useForm<QuizLessonFormData>({
-    resolver: zodResolver(quizLessonFormSchema),
+    resolver: zodResolver(quizLessonFormSchema) as any, // Type assertion needed due to Zod default values
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",

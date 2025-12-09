@@ -63,10 +63,22 @@ export const profileApi = {
   },
 
   /**
-   * Upload avatar image (currently accepts URL)
+   * Upload user avatar
    */
-  uploadAvatar: async (avatarUrl: string): Promise<void> => {
-    await api.post("/users/profile/avatar", { avatarUrl });
+  uploadAvatar: async (file: File): Promise<ProfileResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post<ProfileResponse>(
+      "/users/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
   },
 
   /**

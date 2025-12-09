@@ -5,6 +5,7 @@
 
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Eye, Globe, GlobeLock, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +19,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CourseForm } from "../components/CourseForm";
 import { SectionManager } from "../components/SectionManager";
+import { ThumbnailUpload } from "../components/ThumbnailUpload";
 import {
   useCourse,
   useUpdateCourse,
   usePublishCourse,
   useUnpublishCourse,
+  courseKeys,
 } from "../hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -40,6 +43,7 @@ export default function CourseEditPage() {
   const courseId = parseInt(id || "0", 10);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch course data
   const {
@@ -257,6 +261,33 @@ export default function CourseEditPage() {
             onSubmit={handleSubmit}
             isLoading={updateCourse.isPending}
             onCancel={handleCancel}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Course Thumbnail */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Thumbnail</CardTitle>
+          <CardDescription>
+            Upload a thumbnail image to represent this course.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThumbnailUpload
+            courseId={courseId}
+            currentThumbnailUrl={course.thumbnailUrl}
+            onUploadSuccess={() => {
+              // Refetch course data to update thumbnail URL
+              queryClient.invalidateQueries({
+                queryKey: courseKeys.detail(courseId),
+              });
+            }}
+            onDeleteSuccess={() => {
+              queryClient.invalidateQueries({
+                queryKey: courseKeys.detail(courseId),
+              });
+            }}
           />
         </CardContent>
       </Card>

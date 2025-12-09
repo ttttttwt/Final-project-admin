@@ -25,6 +25,8 @@ export interface Course {
   cefrLevel: CEFRLevel;
   isPublished: boolean;
   sectionCount: number;
+  enrollmentCount?: number;
+  completionCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -122,7 +122,7 @@ export default function LessonCreatePage() {
       try {
         // First, try to get lessons for this section - this will tell us if section exists
         // and give us the section info from a lesson if there are any
-        const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
+        await api.get(`/lessons/sections/${sectionId}`);
 
         // Section exists! Now we need to find which course it belongs to
         // Try fetching all courses (including drafts) using /courses/search endpoint

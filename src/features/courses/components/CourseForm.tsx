@@ -47,12 +47,6 @@ const courseSchema = z.object({
     .max(1000, "Description must not exceed 1000 characters")
     .optional()
     .or(z.literal("")),
-  thumbnailUrl: z
-    .string()
-    .url("Please enter a valid URL")
-    .max(255, "URL must not exceed 255 characters")
-    .optional()
-    .or(z.literal("")),
   cefrLevel: z.enum(CEFR_LEVELS, {
     message: "Please select a CEFR level",
   }),
@@ -121,7 +115,6 @@ export function CourseForm({
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      thumbnailUrl: initialData?.thumbnailUrl || "",
       cefrLevel: initialData?.cefrLevel || undefined,
     },
   });
@@ -132,7 +125,6 @@ export function CourseForm({
       form.reset({
         title: initialData.title,
         description: initialData.description || "",
-        thumbnailUrl: initialData.thumbnailUrl || "",
         cefrLevel: initialData.cefrLevel,
       });
     }
@@ -147,10 +139,6 @@ export function CourseForm({
 
     if (values.description && values.description.trim()) {
       cleanedData.description = values.description.trim();
-    }
-
-    if (values.thumbnailUrl && values.thumbnailUrl.trim()) {
-      cleanedData.thumbnailUrl = values.thumbnailUrl.trim();
     }
 
     onSubmit(cleanedData);
@@ -242,47 +230,6 @@ export function CourseForm({
             </FormItem>
           )}
         />
-
-        {/* Thumbnail URL */}
-        <FormField
-          control={form.control}
-          name="thumbnailUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Thumbnail URL</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://example.com/image.jpg"
-                  type="url"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormDescription>
-                URL to a cover image for this course (optional)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Preview thumbnail if URL is provided */}
-        {form.watch("thumbnailUrl") && (
-          <div className="rounded-md border p-4">
-            <p className="mb-2 text-sm font-medium">Thumbnail Preview</p>
-            <div className="h-32 w-48 overflow-hidden rounded-md bg-muted">
-              <img
-                src={form.watch("thumbnailUrl")}
-                alt="Thumbnail preview"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "";
-                  (e.target as HTMLImageElement).alt = "Failed to load image";
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">

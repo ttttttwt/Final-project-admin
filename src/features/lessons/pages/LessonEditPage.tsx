@@ -29,6 +29,7 @@ import { ReadingLessonEditor } from "../components/ReadingLessonEditor";
 import { ListeningLessonEditor } from "../components/ListeningLessonEditor";
 import { QuizLessonEditor } from "../components/QuizLessonEditor";
 import { SpeakingLessonEditor } from "../components/SpeakingLessonEditor";
+import { AudioUpload } from "../components/AudioUpload";
 import { useLesson, useUpdateLesson } from "../hooks/useLessons";
 import api from "@/lib/api";
 import type {
@@ -565,6 +566,36 @@ export default function LessonEditPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
+      {/* Audio Upload for LISTENING lessons */}
+      {lesson.lessonType === "LISTENING" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lesson Audio</CardTitle>
+            <CardDescription>
+              Upload an audio file for this listening lesson
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AudioUpload
+              lessonId={lessonId}
+              currentAudioUrl={lesson.audioUrl}
+              onUploadSuccess={() => {
+                toast({
+                  title: "Success",
+                  description: "Audio file uploaded successfully.",
+                });
+              }}
+              onDeleteSuccess={() => {
+                toast({
+                  title: "Success",
+                  description: "Audio file removed successfully.",
+                });
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Render appropriate editor based on lesson type */}
       {lesson.lessonType === "READING" && (
