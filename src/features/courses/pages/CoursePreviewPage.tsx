@@ -19,6 +19,8 @@ import {
   ClipboardCheck,
   Mic,
   Eye,
+  Users,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -422,7 +424,7 @@ export default function CoursePreviewPage() {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-3 lg:grid-cols-6">
               <div>
                 <p className="font-medium">CEFR Level</p>
                 <p className="text-muted-foreground">{course.cefrLevel}</p>
@@ -430,6 +432,20 @@ export default function CoursePreviewPage() {
               <div>
                 <p className="font-medium">Sections</p>
                 <p className="text-muted-foreground">{course.sectionCount}</p>
+              </div>
+              <div>
+                <p className="font-medium flex items-center gap-1.5">
+                  <Users className="h-4 w-4" />
+                  Enrolled
+                </p>
+                <p className="text-muted-foreground">{course.enrollmentCount ?? 0}</p>
+              </div>
+              <div>
+                <p className="font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  Completed
+                </p>
+                <p className="text-muted-foreground">{course.completionCount ?? 0}</p>
               </div>
               <div>
                 <p className="font-medium">Created</p>

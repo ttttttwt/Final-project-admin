@@ -12,6 +12,8 @@ import {
   Eye,
   Globe,
   GlobeLock,
+  Users,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -260,6 +262,26 @@ export function CourseTable({
       header: "Sections",
       cell: (course) => (
         <span className="text-muted-foreground">{course.sectionCount}</span>
+      ),
+    },
+    {
+      accessorKey: "enrollmentCount",
+      header: "Enrolled",
+      cell: (course) => (
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>{course.enrollmentCount ?? 0}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "completionCount",
+      header: "Completed",
+      cell: (course) => (
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <span>{course.completionCount ?? 0}</span>
+        </div>
       ),
     },
     {
