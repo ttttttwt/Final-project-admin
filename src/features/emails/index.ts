@@ -24,6 +24,7 @@ export { EmailStatsCards, CompactStats } from "./components/EmailStatsCards";
 export { EmailQueueTable } from "./components/EmailQueueTable";
 export { EmailDetailDialog } from "./components/EmailDetailDialog";
 export { SendEmailDialog } from "./components/SendEmailDialog";
+export { EmailPreview, CompactEmailPreview } from "./components/EmailPreview";
 
 // Pages
 export { EmailManagementPage } from "./pages/EmailManagementPage";

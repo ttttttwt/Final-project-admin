@@ -36,8 +36,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Eye, EyeOff } from "lucide-react";
 import type { AdminEmailRequest, EmailType, EmailPriority } from "../types/email.types";
 import { EMAIL_TYPE_LABELS, EMAIL_PRIORITY_LABELS } from "../types/email.types";
+import { EmailPreview, CompactEmailPreview } from "./EmailPreview";
 
 // Validation schema
 const sendEmailSchema = z.object({
@@ -46,11 +59,15 @@ const sendEmailSchema = z.object({
   priority: z.string().optional().or(z.literal("")),
   userIds: z.string().optional().or(z.literal("")),
   locale: z.string().min(1),
-  // Template data fields
+  // Template data fields for SYSTEM_ANNOUNCEMENT
   title: z.string().optional().or(z.literal("")),
   message: z.string().optional().or(z.literal("")),
   ctaText: z.string().optional().or(z.literal("")),
   ctaUrl: z.string().optional().or(z.literal("")),
+  // Template data fields for MAINTENANCE_NOTICE
+  startTime: z.string().optional().or(z.literal("")),
+  endTime: z.string().optional().or(z.literal("")),
+  duration: z.string().optional().or(z.literal("")),
 });
 
 type SendEmailFormData = z.infer<typeof sendEmailSchema>;
@@ -83,6 +100,7 @@ export function SendEmailDialog({
 }: SendEmailDialogProps) {
   const [mode, setMode] = useState<"targeted" | "broadcast">("targeted");
   const [confirmBroadcast, setConfirmBroadcast] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
   const form = useForm<SendEmailFormData>({
     resolver: zodResolver(sendEmailSchema) as never,
@@ -96,15 +114,30 @@ export function SendEmailDialog({
       message: "",
       ctaText: "",
       ctaUrl: "",
+      startTime: "",
+      endTime: "",
+      duration: "",
     },
   });
 
   const handleSubmit = (data: SendEmailFormData) => {
+    // Map form fields to template variables expected by backend
     const templateData: Record<string, unknown> = {};
-    if (data.title) templateData.title = data.title;
-    if (data.message) templateData.message = data.message;
-    if (data.ctaText) templateData.ctaText = data.ctaText;
-    if (data.ctaUrl) templateData.ctaUrl = data.ctaUrl;
+    
+    if (data.emailType === "MAINTENANCE_NOTICE") {
+      // Maintenance template expects: startTime, endTime, duration
+      if (data.startTime) templateData.startTime = data.startTime;
+      if (data.endTime) templateData.endTime = data.endTime;
+      if (data.duration) templateData.duration = data.duration;
+      // Also support message for additional info
+      if (data.message) templateData.message = data.message;
+    } else {
+      // SYSTEM_ANNOUNCEMENT template expects: announcementTitle, announcementContent, actionUrl, actionButtonText
+      if (data.title) templateData.announcementTitle = data.title;
+      if (data.message) templateData.announcementContent = data.message;
+      if (data.ctaText) templateData.actionButtonText = data.ctaText;
+      if (data.ctaUrl) templateData.actionUrl = data.ctaUrl;
+    }
 
     const request: AdminEmailRequest = {
       emailType: data.emailType as EmailType,
@@ -143,14 +176,23 @@ export function SendEmailDialog({
       form.reset();
       setConfirmBroadcast(false);
       setMode("targeted");
+      setShowPreview(true);
     }
     onOpenChange(newOpen);
   };
 
   const isLoading = isSending || isBroadcasting;
 
+  // Watch form values for preview
+  const watchedValues = form.watch();
+  const userIdsCount = watchedValues.userIds
+    ?.split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0).length || 0;
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <>
+      <Dialog open={open && !confirmBroadcast} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -285,68 +327,180 @@ export function SendEmailDialog({
               <div className="space-y-4 border-t pt-4">
                 <h4 className="font-medium text-sm">Template Variables</h4>
                 
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Announcement title..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Fields for SYSTEM_ANNOUNCEMENT */}
+                {watchedValues.emailType !== "MAINTENANCE_NOTICE" && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Announcement title..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Message</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Main message content..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Message</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Main message content..."
+                              className="min-h-[100px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="ctaText"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CTA Button Text</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Learn More" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="ctaText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CTA Button Text</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Learn More" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={form.control}
-                    name="ctaUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CTA URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                      <FormField
+                        control={form.control}
+                        name="ctaUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CTA URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Fields for MAINTENANCE_NOTICE */}
+                {watchedValues.emailType === "MAINTENANCE_NOTICE" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="startTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Start Time</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Dec 3, 2025 at 02:00 AM UTC" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="endTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>End Time</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Dec 3, 2025 at 04:00 AM UTC" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="duration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Duration</FormLabel>
+                          <FormControl>
+                            <Input placeholder="~2 hours" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Information (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Any additional details about the maintenance..."
+                              className="min-h-[80px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
               </div>
+
+              {/* Preview Section */}
+              <Collapsible open={showPreview} onOpenChange={setShowPreview}>
+                <div className="flex items-center justify-between">
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      {showPreview ? (
+                        <>
+                          <EyeOff className="h-4 w-4" />
+                          Hide Preview
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4" />
+                          Show Preview
+                        </>
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="mt-4">
+                  <EmailPreview
+                    emailType={watchedValues.emailType as EmailType}
+                    priority={(watchedValues.priority as EmailPriority) || "NORMAL"}
+                    subject={watchedValues.subject}
+                    templateData={{
+                      title: watchedValues.title,
+                      message: watchedValues.message,
+                      ctaText: watchedValues.ctaText,
+                      ctaUrl: watchedValues.ctaUrl,
+                    }}
+                    mode={mode}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
 
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
@@ -371,5 +525,61 @@ export function SendEmailDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* Confirmation Dialog with Preview */}
+    <AlertDialog open={confirmBroadcast} onOpenChange={setConfirmBroadcast}>
+      <AlertDialogContent className="max-w-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {mode === "broadcast" ? "Confirm Broadcast Email" : "Confirm Send Email"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {mode === "broadcast" ? (
+              <>
+                This will send an email to <strong>all active users</strong> on
+                the platform. This action cannot be undone.
+              </>
+            ) : (
+              <>
+                This will send an email to <strong>{userIdsCount} user{userIdsCount > 1 ? "s" : ""}</strong>.
+                Please review the preview below before confirming.
+              </>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <div className="my-4">
+          <CompactEmailPreview
+            emailType={watchedValues.emailType as EmailType}
+            subject={watchedValues.subject}
+            templateData={{
+              title: watchedValues.title,
+              message: watchedValues.message,
+            }}
+            mode={mode}
+            recipientCount={userIdsCount}
+          />
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => form.handleSubmit(handleSubmit)()}
+            disabled={isLoading}
+            className={mode === "broadcast" ? "bg-destructive hover:bg-destructive/90" : ""}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>Confirm & Send</>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
