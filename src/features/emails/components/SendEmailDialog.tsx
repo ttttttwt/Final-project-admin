@@ -496,6 +496,10 @@ export function SendEmailDialog({
                       message: watchedValues.message,
                       ctaText: watchedValues.ctaText,
                       ctaUrl: watchedValues.ctaUrl,
+                      // Maintenance-specific fields
+                      startTime: watchedValues.startTime,
+                      endTime: watchedValues.endTime,
+                      duration: watchedValues.duration,
                     }}
                     mode={mode}
                   />
@@ -555,6 +559,10 @@ export function SendEmailDialog({
             templateData={{
               title: watchedValues.title,
               message: watchedValues.message,
+              // Maintenance-specific fields for summary
+              startTime: watchedValues.startTime,
+              endTime: watchedValues.endTime,
+              duration: watchedValues.duration,
             }}
             mode={mode}
             recipientCount={userIdsCount}
