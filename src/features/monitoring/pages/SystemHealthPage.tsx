@@ -190,14 +190,14 @@ export default function SystemHealthPage() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">{statusConfig.label}</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Overall system status:{" "}
               <Badge
                 variant={overallStatus === "UP" ? "default" : "destructive"}
               >
                 {overallStatus}
               </Badge>
-            </p>
+            </div>
           </div>
         </CardContent>
       </Card>
