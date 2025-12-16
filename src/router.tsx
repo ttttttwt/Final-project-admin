@@ -22,6 +22,11 @@ import { EmailManagementPage } from "@/features/emails";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/settings/pages/SettingsPage";
 import ForbiddenPage from "@/features/auth/pages/ForbiddenPage";
+import {
+  AIOverviewPage,
+  QuotaManagementPage,
+  CostAnalyticsPage,
+} from "@/features/ai";
 
 const router = createBrowserRouter([
   {
@@ -91,6 +96,30 @@ const router = createBrowserRouter([
       {
         path: "lessons/:id/edit",
         element: <LessonEditPage />,
+      },
+      {
+        path: "ai",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <AIOverviewPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "ai/quotas",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <QuotaManagementPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "ai/costs",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <CostAnalyticsPage />
+          </RoleGuard>
+        ),
       },
       {
         path: "monitoring/health",

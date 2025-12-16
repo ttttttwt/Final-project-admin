@@ -8,7 +8,7 @@
  * - Content templates: email/system/announcement.html, email/system/maintenance.html, etc.
  */
 
-import { Mail, User, Tag, Clock, AlertTriangle, Wrench, Calendar } from "lucide-react";
+import { Mail, User, Tag, Clock, AlertTriangle, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

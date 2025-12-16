@@ -9,6 +9,7 @@ import {
   User,
   Bell,
   Mail,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -36,6 +37,12 @@ export default function Sidebar() {
       href: "/courses",
       icon: BookOpen,
       show: true,
+    },
+    {
+      title: "AI Management",
+      href: "/ai",
+      icon: Bot,
+      show: isAdmin,
     },
     {
       title: "Monitoring",
