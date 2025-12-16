@@ -117,8 +117,11 @@ export function CostBreakdownChart({
   title = "Cost by Feature",
   description = "Breakdown of AI costs by feature type",
 }: CostBreakdownChartProps) {
+  // Ensure data is an array
+  const safeData = Array.isArray(data) ? data : [];
+
   // Transform data for recharts
-  const chartData = data.map((item) => ({
+  const chartData = safeData.map((item) => ({
     name: formatFeatureName(item.featureName),
     value: item.totalCost,
     totalCost: item.totalCost,
@@ -127,7 +130,7 @@ export function CostBreakdownChart({
   }));
 
   // Calculate total cost
-  const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+  const totalCost = safeData.reduce((sum, item) => sum + item.totalCost, 0);
 
   return (
     <Card>
@@ -138,7 +141,7 @@ export function CostBreakdownChart({
       <CardContent>
         {isLoading ? (
           <ChartSkeleton />
-        ) : data.length === 0 ? (
+        ) : safeData.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
             <p>No cost data available</p>
           </div>

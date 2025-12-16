@@ -26,6 +26,8 @@ import {
   AIOverviewPage,
   QuotaManagementPage,
   CostAnalyticsPage,
+  AIConfigPage,
+  AIAlertsPage,
 } from "@/features/ai";
 
 const router = createBrowserRouter([
@@ -118,6 +120,22 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <CostAnalyticsPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "ai/config",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <AIConfigPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "ai/alerts",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <AIAlertsPage />
           </RoleGuard>
         ),
       },
