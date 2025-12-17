@@ -245,6 +245,31 @@ export const useExportCostReport = () => {
   });
 };
 
+/**
+ * Hook to update monthly budget
+ */
+export const useUpdateBudget = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (budget: number) => costApi.updateBudget(budget),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["ai", "costs"] });
+      toast({
+        title: "Budget updated",
+        description: `Monthly budget set to $${data.budget}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Failed to update budget",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 // ===================================================================
 // CONFIGURATION HOOKS
 // ===================================================================

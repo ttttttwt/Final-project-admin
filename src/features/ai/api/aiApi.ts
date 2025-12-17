@@ -159,6 +159,16 @@ export const costApi = {
     const response = await api.get("/admin/ai-costs/by-user", { params });
     return response.data;
   },
+
+  /**
+   * Set monthly budget
+   */
+  updateBudget: async (budget: number): Promise<{ budget: number }> => {
+    const response = await api.put<{ budget: number }>("/admin/ai-costs/budget", {
+      budget,
+    });
+    return response.data;
+  },
 };
 
 // ===================================================================

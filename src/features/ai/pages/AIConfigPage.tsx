@@ -19,7 +19,7 @@ import {
   useUpdateAISettings,
   useToggleFeature,
 } from "../hooks/useAI";
-import type { AIFeatureConfig } from "../types";
+import type { AIFeatureConfig, AIGlobalSettings } from "../types";
 
 export function AIConfigPage() {
   const {
@@ -32,22 +32,13 @@ export function AIConfigPage() {
   const updateSettingsMutation = useUpdateAISettings();
   const toggleFeatureMutation = useToggleFeature();
 
-  const [formData, setFormData] = useState<{
-    provider: string;
-    model: string;
-    temperature: number;
-    maxTokens: number;
-  } | null>(null);
+  const [formData, setFormData] = useState<Omit<AIGlobalSettings, "features"> | null>(null);
 
   // Initialize form data when settings load
   useEffect(() => {
     if (settings && !formData) {
-      setFormData({
-        provider: settings.provider,
-        model: settings.model,
-        temperature: settings.temperature,
-        maxTokens: settings.maxTokens,
-      });
+      const { features, ...globalSettings } = settings;
+      setFormData(globalSettings);
     }
   }, [settings, formData]);
 
@@ -105,9 +96,9 @@ export function AIConfigPage() {
         <TabsContent value="global" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Model Configuration</CardTitle>
+              <CardTitle>General Configuration</CardTitle>
               <CardDescription>
-                Configure the default AI model parameters
+                Configure global AI parameters and limits
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -115,59 +106,116 @@ export function AIConfigPage() {
                 <div className="py-8 text-center">Loading settings...</div>
               ) : (
                 <>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Global AI Enabled</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Master switch to enable/disable all AI features
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.globalEnabled}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, globalEnabled: checked })
+                      }
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="provider">Provider</Label>
+                      <Label htmlFor="monthlyBudgetLimit">Monthly Budget Limit ($)</Label>
                       <Input
-                        id="provider"
-                        value={formData.provider}
-                        onChange={(e) =>
-                          setFormData({ ...formData, provider: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="model">Model</Label>
-                      <Input
-                        id="model"
-                        value={formData.model}
-                        onChange={(e) =>
-                          setFormData({ ...formData, model: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="temperature">Temperature</Label>
-                      <Input
-                        id="temperature"
+                        id="monthlyBudgetLimit"
                         type="number"
-                        step="0.1"
                         min="0"
-                        max="2"
-                        value={formData.temperature}
+                        step="0.01"
+                        value={formData.monthlyBudgetLimit}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            temperature: parseFloat(e.target.value),
+                            monthlyBudgetLimit: parseFloat(e.target.value),
                           })
                         }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="maxTokens">Max Tokens</Label>
+                      <Label htmlFor="alertThresholdPercentage">Alert Threshold (%)</Label>
                       <Input
-                        id="maxTokens"
+                        id="alertThresholdPercentage"
                         type="number"
-                        value={formData.maxTokens}
+                        min="0"
+                        max="100"
+                        value={formData.alertThresholdPercentage}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            maxTokens: parseInt(e.target.value),
+                            alertThresholdPercentage: parseInt(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="costPerInputToken">Cost Per Input Token ($)</Label>
+                      <Input
+                        id="costPerInputToken"
+                        type="number"
+                        step="0.000001"
+                        value={formData.costPerInputToken}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            costPerInputToken: parseFloat(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="costPerOutputToken">Cost Per Output Token ($)</Label>
+                      <Input
+                        id="costPerOutputToken"
+                        type="number"
+                        step="0.000001"
+                        value={formData.costPerOutputToken}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            costPerOutputToken: parseFloat(e.target.value),
                           })
                         }
                       />
                     </div>
                   </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Rate Limiting</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enable global rate limiting for AI requests
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.rateLimitEnabled}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, rateLimitEnabled: checked })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Fallback Enabled</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enable fallback to alternative models on failure
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.fallbackEnabled}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, fallbackEnabled: checked })
+                      }
+                    />
+                  </div>
+
                   <div className="flex justify-end">
                     <Button
                       onClick={handleSaveGlobal}

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { AINav, CostBreakdownChart, CostTrendChart } from "../components";
+import { AINav, CostBreakdownChart, CostTrendChart, SetBudgetDialog } from "../components";
 import {
   useCostAnalytics,
   useCostProjection,
@@ -151,6 +151,7 @@ export function CostAnalyticsPage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <SetBudgetDialog currentBudget={analyticsData?.budgetLimit ?? 0} />
         </div>
       </div>
 

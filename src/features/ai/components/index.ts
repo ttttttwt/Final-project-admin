@@ -13,3 +13,4 @@ export { QuotaEditDialog } from "./QuotaEditDialog";
 // Cost Analytics
 export { CostBreakdownChart } from "./CostBreakdownChart";
 export { CostTrendChart } from "./CostTrendChart";
+export { SetBudgetDialog } from "./SetBudgetDialog";
