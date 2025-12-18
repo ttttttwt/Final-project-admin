@@ -7,6 +7,8 @@ import RoleGuard from "@/components/auth/RoleGuard";
 import UserListPage from "@/features/users/pages/UserListPage";
 import UserCreatePage from "@/features/users/pages/UserCreatePage";
 import UserEditPage from "@/features/users/pages/UserEditPage";
+import UserDetailPage from "@/features/users/pages/UserDetailPage";
+import { DeletedUsersPage } from "@/features/users/pages/DeletedUsersPage";
 import CourseListPage from "@/features/courses/pages/CourseListPage";
 import CourseCreatePage from "@/features/courses/pages/CourseCreatePage";
 import CourseEditPage from "@/features/courses/pages/CourseEditPage";
@@ -68,10 +70,26 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "users/:id",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <UserDetailPage />
+          </RoleGuard>
+        ),
+      },
+      {
         path: "users/:id/edit",
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <UserEditPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "users/deleted",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <DeletedUsersPage />
           </RoleGuard>
         ),
       },

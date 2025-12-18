@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, X, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,10 +122,16 @@ export function UserListPage() {
             Manage user accounts, roles, and permissions
           </p>
         </div>
-        <Button onClick={() => navigate("/users/create")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/users/deleted")}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            View Trash
+          </Button>
+          <Button onClick={() => navigate("/users/create")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
+        </div>
       </div>
 
       {/* Filters Card */}

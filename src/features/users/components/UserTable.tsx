@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Edit, Trash2, MoreHorizontal, BookOpen, GraduationCap, Eye } from "lucide-react";
 import type { User } from "../types/user.types";
 import { useDeleteUser } from "../hooks/useUsers";
 import {
@@ -42,7 +42,7 @@ export function UserTable({
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Delete user mutation
+  // Delete user mutation (soft delete)
   const deleteUserMutation = useDeleteUser();
 
   // Handle delete click - open confirmation dialog
@@ -51,15 +51,15 @@ export function UserTable({
     setIsDeleteDialogOpen(true);
   };
 
-  // Handle delete confirmation
+  // Handle delete confirmation (soft delete)
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
 
     try {
       await deleteUserMutation.mutateAsync(userToDelete.id);
       toast({
-        title: "User deleted",
-        description: `User "${userToDelete.email}" has been deleted successfully.`,
+        title: "User moved to trash",
+        description: `User "${userToDelete.email}" has been moved to trash. You can restore it later.`,
       });
       setIsDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -68,7 +68,7 @@ export function UserTable({
         error instanceof Error
           ? error.message
           : (error as { response?: { data?: { message?: string } } })?.response
-              ?.data?.message || "Failed to delete user";
+            ?.data?.message || "Failed to delete user";
       toast({
         variant: "destructive",
         title: "Error",
@@ -109,6 +109,35 @@ export function UserTable({
       ),
     },
     {
+      accessorKey: "cefrLevel",
+      header: "Level",
+      cell: (user) => (
+        user.cefrLevel ? (
+          <Badge variant="secondary" className="font-mono">
+            {user.cefrLevel}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "enrollments",
+      header: "Enrollments",
+      cell: (user) => (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="flex items-center gap-1" title="Courses">
+            <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+            {user.enrolledCoursesCount ?? 0}
+          </span>
+          <span className="flex items-center gap-1" title="Paths">
+            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+            {user.enrolledPathsCount ?? 0}
+          </span>
+        </div>
+      ),
+    },
+    {
       accessorKey: "isActive",
       header: "Status",
       cell: (user) => (
@@ -136,6 +165,12 @@ export function UserTable({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
+              onClick={() => navigate(`/users/${user.id}`)}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => navigate(`/users/${user.id}/edit`)}
             >
               <Edit className="mr-2 h-4 w-4" />
@@ -147,7 +182,7 @@ export function UserTable({
               onClick={() => handleDeleteClick(user)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Move to Trash
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -165,17 +200,17 @@ export function UserTable({
         isLoading={isLoading}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog (Soft Delete) */}
       <ConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={handleDialogClose}
-        title="Delete User"
+        title="Move User to Trash"
         description={
           userToDelete
-            ? `Are you sure you want to delete "${userToDelete.email}"? This action cannot be undone.`
-            : "Are you sure you want to delete this user?"
+            ? `Are you sure you want to move "${userToDelete.email}" to trash? The user will be deactivated but their data will be preserved. You can restore them later from the Trash page.`
+            : "Are you sure you want to move this user to trash?"
         }
-        confirmLabel="Delete"
+        confirmLabel="Move to Trash"
         cancelLabel="Cancel"
         onConfirm={handleDeleteConfirm}
         variant="destructive"
@@ -184,3 +219,4 @@ export function UserTable({
     </>
   );
 }
+
