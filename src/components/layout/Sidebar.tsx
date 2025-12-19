@@ -10,6 +10,9 @@ import {
   Bell,
   Mail,
   Bot,
+  BarChart3,
+  CreditCard,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -45,7 +48,25 @@ export default function Sidebar() {
       show: isAdmin,
     },
     {
-      title: "Monitoring",
+      title: "Analytics",
+      href: "/analytics",
+      icon: BarChart3,
+      show: isAdmin,
+    },
+    {
+      title: "Subscriptions",
+      href: "/subscriptions",
+      icon: CreditCard,
+      show: isAdmin,
+    },
+    {
+      title: "User Monitoring",
+      href: "/monitoring/users",
+      icon: Eye,
+      show: isAdmin,
+    },
+    {
+      title: "System Health",
       href: "/monitoring/health",
       icon: Activity,
       show: isAdmin,
@@ -129,3 +150,4 @@ export default function Sidebar() {
     </div>
   );
 }
+

@@ -19,6 +19,7 @@ import SystemHealthPage from "@/features/monitoring/pages/SystemHealthPage";
 import AIUsageLogsPage from "@/features/monitoring/pages/AIUsageLogsPage";
 import ActivityLogsPage from "@/features/monitoring/pages/ActivityLogsPage";
 import AuditLogsPage from "@/features/monitoring/pages/AuditLogsPage";
+import UserMonitoringPage from "@/features/monitoring/pages/UserMonitoringPage";
 import { NotificationsPage } from "@/features/notifications";
 import { EmailManagementPage } from "@/features/emails";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
@@ -31,6 +32,8 @@ import {
   AIConfigPage,
   AIAlertsPage,
 } from "@/features/ai";
+import SubscriptionManagementPage from "@/features/subscriptions/SubscriptionManagementPage";
+import AnalyticsDashboardPage from "@/features/analytics/AnalyticsDashboardPage";
 
 const router = createBrowserRouter([
   {
@@ -158,6 +161,22 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "monitoring/users",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <UserMonitoringPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "analytics",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <AnalyticsDashboardPage />
+          </RoleGuard>
+        ),
+      },
+      {
         path: "monitoring/health",
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
@@ -194,6 +213,14 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <NotificationsPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "subscriptions",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <SubscriptionManagementPage />
           </RoleGuard>
         ),
       },

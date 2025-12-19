@@ -23,6 +23,10 @@ import {
     MapPin,
     Flame,
     Trash,
+    MessageSquare,
+    Layers,
+    FileText,
+    Zap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -338,41 +342,100 @@ const UserDetailPage: React.FC = () => {
                     {user.aiQuota && (
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Sparkles className="h-5 w-5" /> AI Quota
-                                </CardTitle>
-                                <CardDescription>
-                                    {user.aiQuota.isPremium ? "Premium" : "Free"} tier
-                                    {user.aiQuota.isSuspended && (
-                                        <Badge variant="destructive" className="ml-2">Suspended</Badge>
-                                    )}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium">Daily Usage</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Progress
-                                                value={(user.aiQuota.dailyUsed / user.aiQuota.dailyLimit) * 100}
-                                                className="flex-1 h-2"
-                                            />
-                                            <span className="text-sm text-muted-foreground">
-                                                {user.aiQuota.dailyUsed}/{user.aiQuota.dailyLimit}
-                                            </span>
-                                        </div>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Sparkles className="h-5 w-5" /> AI Features Quota
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            <Badge variant={user.aiQuota.planType === 'FREE' ? 'secondary' : 'default'} className="mr-2">
+                                                {user.aiQuota.planType || 'FREE'} Plan
+                                            </Badge>
+                                            {user.aiQuota.isSuspended && (
+                                                <Badge variant="destructive">Suspended</Badge>
+                                            )}
+                                        </CardDescription>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Monthly Usage</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Progress
-                                                value={(user.aiQuota.monthlyUsed / user.aiQuota.monthlyLimit) * 100}
-                                                className="flex-1 h-2"
-                                            />
-                                            <span className="text-sm text-muted-foreground">
-                                                {user.aiQuota.monthlyUsed}/{user.aiQuota.monthlyLimit}
-                                            </span>
+                                    <div className="text-right text-sm text-muted-foreground">
+                                        {user.aiQuota.daysUntilReset !== undefined && (
+                                            <span>Resets in {user.aiQuota.daysUntilReset} days</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {/* Total AI Requests */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Zap className="h-4 w-4 text-amber-500" />
+                                            <span className="font-medium">Total AI Requests</span>
                                         </div>
+                                        <span className="text-sm">
+                                            {user.aiQuota.totalRequestsUsed ?? user.aiQuota.monthlyUsed ?? 0}/
+                                            {user.aiQuota.totalRequestsLimit ?? user.aiQuota.monthlyLimit ?? 0}
+                                            {' '}({Math.round(((user.aiQuota.totalRequestsUsed ?? user.aiQuota.monthlyUsed ?? 0) /
+                                                (user.aiQuota.totalRequestsLimit ?? user.aiQuota.monthlyLimit ?? 1)) * 100)}%)
+                                        </span>
+                                    </div>
+                                    <Progress
+                                        value={((user.aiQuota.totalRequestsUsed ?? user.aiQuota.monthlyUsed ?? 0) /
+                                            (user.aiQuota.totalRequestsLimit ?? user.aiQuota.monthlyLimit ?? 1)) * 100}
+                                        className="h-2"
+                                    />
+                                </div>
+
+                                {/* Feature Breakdown */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {/* Role Play */}
+                                    <div className="p-4 border rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <MessageSquare className="h-4 w-4 text-blue-500" />
+                                            <span className="font-medium text-sm">Role Play</span>
+                                        </div>
+                                        <div className="text-2xl font-bold">
+                                            {user.aiQuota.roleplaySessionsUsed ?? 0}/{user.aiQuota.roleplaySessionsLimit ?? 50}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">sessions</p>
+                                        <Progress
+                                            value={((user.aiQuota.roleplaySessionsUsed ?? 0) /
+                                                (user.aiQuota.roleplaySessionsLimit ?? 50)) * 100}
+                                            className="h-1 mt-2"
+                                        />
+                                    </div>
+
+                                    {/* Flashcard Decks */}
+                                    <div className="p-4 border rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Layers className="h-4 w-4 text-green-500" />
+                                            <span className="font-medium text-sm">Flashcard Decks</span>
+                                        </div>
+                                        <div className="text-2xl font-bold">
+                                            {user.aiQuota.flashcardDecksUsed ?? 0}/{user.aiQuota.flashcardDecksLimit ?? 30}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">decks</p>
+                                        <Progress
+                                            value={((user.aiQuota.flashcardDecksUsed ?? 0) /
+                                                (user.aiQuota.flashcardDecksLimit ?? 30)) * 100}
+                                            className="h-1 mt-2"
+                                        />
+                                    </div>
+
+                                    {/* Grammar Exercises */}
+                                    <div className="p-4 border rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <FileText className="h-4 w-4 text-purple-500" />
+                                            <span className="font-medium text-sm">Grammar Exercises</span>
+                                        </div>
+                                        <div className="text-2xl font-bold">
+                                            {user.aiQuota.grammarExercisesUsed ?? 0}/{user.aiQuota.grammarExercisesLimit ?? 300}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">exercises</p>
+                                        <Progress
+                                            value={((user.aiQuota.grammarExercisesUsed ?? 0) /
+                                                (user.aiQuota.grammarExercisesLimit ?? 300)) * 100}
+                                            className="h-1 mt-2"
+                                        />
                                     </div>
                                 </div>
                             </CardContent>

@@ -93,6 +93,36 @@ export interface FeatureQuota {
 
 export interface AiQuotaSummary {
   isPremium: boolean;
+  
+  // ========== Subscription-Based Quota (NEW) ==========
+  
+  /** User's subscription plan: FREE, MONTHLY, YEARLY */
+  planType?: string;
+  
+  /** Date when monthly quota resets (ISO format) */
+  quotaResetDate?: string;
+  
+  /** Days until next quota reset */
+  daysUntilReset?: number;
+  
+  /** Role play sessions used/limit for current month */
+  roleplaySessionsUsed?: number;
+  roleplaySessionsLimit?: number;
+  
+  /** Flashcard decks created used/limit */
+  flashcardDecksUsed?: number;
+  flashcardDecksLimit?: number;
+  
+  /** Grammar exercises generated used/limit for current month */
+  grammarExercisesUsed?: number;
+  grammarExercisesLimit?: number;
+  
+  /** Total AI requests used/limit for current month */
+  totalRequestsUsed?: number;
+  totalRequestsLimit?: number;
+  
+  // ========== Legacy Fields ==========
+  
   dailyLimit: number;
   dailyUsed: number;
   monthlyLimit: number;
