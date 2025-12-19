@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { AlertTriangle, Check, CheckCircle, Eye, RefreshCw } from "lucide-react";
+import { useState, useMemo } from "react";
+import { AlertTriangle, Check, CheckCircle, Eye, RefreshCw, Filter } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,13 +25,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AINav } from "../components";
+import { AINav, PlanBadge } from "../components";
 import {
   useAIAlerts,
   useMarkAlertRead,
   useAcknowledgeAlert,
   useMarkAllAlertsRead,
 } from "../hooks/useAI";
+import type { AIUsageAlert } from "../types";
+
+// Alert types
+const ALERT_TYPES = [
+  "BUDGET_WARNING",
+  "BUDGET_EXCEEDED",
+  "QUOTA_WARNING",
+  "QUOTA_EXCEEDED",
+  "ERROR_SPIKE",
+  "API_ERROR",
+] as const;
+
+const SEVERITIES = ["INFO", "WARNING", "ERROR", "CRITICAL"] as const;
 
 function getSeverityVariant(
   severity: string
@@ -40,9 +60,19 @@ function getSeverityVariant(
   }
 }
 
+function formatAlertType(type: string): string {
+  return type
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function AIAlertsPage() {
+  // Filter state
   const [unreadOnly, setUnreadOnly] = useState(false);
-  
+  const [severityFilter, setSeverityFilter] = useState<string>("ALL");
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
+
   const {
     data: alertsData,
     isLoading,
@@ -53,6 +83,32 @@ export function AIAlertsPage() {
   const markReadMutation = useMarkAlertRead();
   const acknowledgeMutation = useAcknowledgeAlert();
   const markAllReadMutation = useMarkAllAlertsRead();
+
+  // Filter alerts locally
+  const filteredAlerts = useMemo(() => {
+    if (!alertsData?.content) return [];
+
+    return alertsData.content.filter((alert: AIUsageAlert) => {
+      if (severityFilter !== "ALL" && alert.severity !== severityFilter) {
+        return false;
+      }
+      if (typeFilter !== "ALL" && alert.type !== typeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [alertsData?.content, severityFilter, typeFilter]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const content = alertsData?.content ?? [];
+    return {
+      total: content.length,
+      critical: content.filter((a: AIUsageAlert) => a.severity === "CRITICAL").length,
+      warning: content.filter((a: AIUsageAlert) => a.severity === "WARNING").length,
+      unread: alertsData?.unreadCount ?? 0,
+    };
+  }, [alertsData]);
 
   const handleMarkRead = (id: string) => {
     markReadMutation.mutate(id);
@@ -65,6 +121,14 @@ export function AIAlertsPage() {
   const handleMarkAllRead = () => {
     markAllReadMutation.mutate();
   };
+
+  const clearFilters = () => {
+    setSeverityFilter("ALL");
+    setTypeFilter("ALL");
+    setUnreadOnly(false);
+  };
+
+  const hasActiveFilters = severityFilter !== "ALL" || typeFilter !== "ALL" || unreadOnly;
 
   if (error) {
     return (
@@ -85,6 +149,7 @@ export function AIAlertsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <AINav />
 
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">AI Alerts</h1>
@@ -96,15 +161,8 @@ export function AIAlertsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setUnreadOnly(!unreadOnly)}
-          >
-            {unreadOnly ? "Show All" : "Show Unread Only"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleMarkAllRead()}
-            disabled={markAllReadMutation.isPending}
+            disabled={markAllReadMutation.isPending || stats.unread === 0}
           >
             <CheckCircle className="mr-2 h-4 w-4" />
             Mark All Read
@@ -120,12 +178,94 @@ export function AIAlertsPage() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total Alerts</CardDescription>
+            <CardTitle className="text-2xl">{stats.total}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Critical</CardDescription>
+            <CardTitle className="text-2xl text-destructive">{stats.critical}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Warnings</CardDescription>
+            <CardTitle className="text-2xl text-yellow-600">{stats.warning}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Unread</CardDescription>
+            <CardTitle className="text-2xl text-blue-600">{stats.unread}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Alert History</CardTitle>
-          <CardDescription>
-            {alertsData?.totalElements || 0} alerts found
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Alert History</CardTitle>
+              <CardDescription>
+                {filteredAlerts.length} of {stats.total} alerts shown
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Severity Filter */}
+              <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Severity</SelectItem>
+                  {SEVERITIES.map((sev) => (
+                    <SelectItem key={sev} value={sev}>
+                      {sev}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Type Filter */}
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  {ALERT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {formatAlertType(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Unread Toggle */}
+              <Button
+                variant={unreadOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUnreadOnly(!unreadOnly)}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Unread Only
+              </Button>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -134,6 +274,7 @@ export function AIAlertsPage() {
                 <TableHead>Severity</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Message</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -142,30 +283,48 @@ export function AIAlertsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     Loading alerts...
                   </TableCell>
                 </TableRow>
-              ) : alertsData?.content?.length === 0 ? (
+              ) : filteredAlerts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No alerts found
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    {hasActiveFilters ? "No alerts match the current filters" : "No alerts found"}
                   </TableCell>
                 </TableRow>
               ) : (
-                alertsData?.content?.map((alert) => (
-                  <TableRow key={alert.id}>
+                filteredAlerts.map((alert: AIUsageAlert) => (
+                  <TableRow key={alert.id} className={!alert.isRead ? "bg-muted/30" : ""}>
                     <TableCell>
                       <Badge variant={getSeverityVariant(alert.severity)}>
                         {alert.severity}
                       </Badge>
                     </TableCell>
-                    <TableCell>{alert.type}</TableCell>
-                    <TableCell className="max-w-md truncate" title={alert.message}>
-                      {alert.message}
+                    <TableCell>
+                      <span className="text-sm">{formatAlertType(alert.type)}</span>
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <p className="truncate" title={alert.message}>
+                        {alert.message}
+                      </p>
                     </TableCell>
                     <TableCell>
-                      {new Date(alert.createdAt).toLocaleString()}
+                      {alert.details?.userFullName ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{String(alert.details.userFullName)}</span>
+                          {typeof alert.details?.planType === 'string' && (
+                            <PlanBadge planType={alert.details.planType} size="sm" />
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(alert.createdAt).toLocaleString()}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {alert.isRead ? (

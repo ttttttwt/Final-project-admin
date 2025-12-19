@@ -1,10 +1,10 @@
 /**
  * QuotaManagementPage Component
- * Admin page for managing user AI quotas
+ * Admin page for managing user AI quotas with Pro/Free plan awareness
  */
 
 import { useState, useMemo } from "react";
-import { Users, RefreshCw } from "lucide-react";
+import { Users, RefreshCw, Crown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
   useSetUnlimited,
 } from "../hooks/useAI";
 import type { UserAIQuota, QuotaSearchParams, UpdateQuotaInput } from "../types";
+import { isPro } from "../types";
 
 export function QuotaManagementPage() {
   // State
@@ -30,6 +31,7 @@ export function QuotaManagementPage() {
     size: 10,
   });
   const [searchValue, setSearchValue] = useState("");
+  const [planTypeFilter, setPlanTypeFilter] = useState<"FREE" | "PRO" | "ALL">("ALL");
   const [editingQuota, setEditingQuota] = useState<UserAIQuota | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -38,8 +40,9 @@ export function QuotaManagementPage() {
     () => ({
       ...searchParams,
       search: searchValue || undefined,
+      planType: planTypeFilter !== "ALL" ? planTypeFilter : undefined,
     }),
-    [searchParams, searchValue]
+    [searchParams, searchValue, planTypeFilter]
   );
 
   // Queries and mutations
@@ -57,6 +60,11 @@ export function QuotaManagementPage() {
   // Handlers
   const handleSearch = (search: string) => {
     setSearchValue(search);
+    setSearchParams((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handlePlanTypeFilterChange = (filter: "FREE" | "PRO" | "ALL") => {
+    setPlanTypeFilter(filter);
     setSearchParams((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -82,7 +90,7 @@ export function QuotaManagementPage() {
   };
 
   const handleReset = (userId: string) => {
-    if (confirm("Are you sure you want to reset this user's daily counters?")) {
+    if (confirm("Are you sure you want to reset this user's monthly counters?")) {
       resetQuotaMutation.mutate(userId);
     }
   };
@@ -109,17 +117,17 @@ export function QuotaManagementPage() {
     );
   }
 
-  // Calculate summary stats
+  // Calculate summary stats with plan breakdown
   const stats = useMemo(() => {
     if (!quotasData?.content) {
-      return { total: 0, unlimited: 0, exceeded: 0 };
+      return { total: 0, free: 0, pro: 0, exceeded: 0, unlimited: 0 };
     }
     return {
       total: quotasData.totalElements,
+      free: quotasData.content.filter((q) => !isPro(q.planType)).length,
+      pro: quotasData.content.filter((q) => isPro(q.planType)).length,
+      exceeded: quotasData.content.filter((q) => q.quotaCritical).length,
       unlimited: quotasData.content.filter((q) => q.isUnlimited).length,
-      exceeded: quotasData.content.filter(
-        (q) => !q.isUnlimited && q.totalUsedToday >= q.totalDailyLimit
-      ).length,
     };
   }, [quotasData]);
 
@@ -136,7 +144,7 @@ export function QuotaManagementPage() {
             Quota Management
           </h1>
           <p className="text-muted-foreground">
-            Manage daily AI usage limits for users
+            Manage monthly AI usage limits for Free and Pro users
           </p>
         </div>
         <Button
@@ -153,22 +161,31 @@ export function QuotaManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total Users with Quotas</CardDescription>
+            <CardDescription>Total Users</CardDescription>
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Unlimited Access Users</CardDescription>
-            <CardTitle className="text-3xl">{stats.unlimited}</CardTitle>
+            <CardDescription className="flex items-center gap-1.5">
+              <Crown className="h-3.5 w-3.5 text-amber-500" />
+              Pro Users
+            </CardDescription>
+            <CardTitle className="text-3xl text-amber-600">{stats.pro}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Exceeded Today</CardDescription>
+            <CardDescription>Free Users</CardDescription>
+            <CardTitle className="text-3xl text-muted-foreground">{stats.free}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Quota Exceeded</CardDescription>
             <CardTitle className="text-3xl text-destructive">
               {stats.exceeded}
             </CardTitle>
@@ -181,7 +198,7 @@ export function QuotaManagementPage() {
         <CardHeader>
           <CardTitle>User Quotas</CardTitle>
           <CardDescription>
-            View and manage AI usage quotas for all users
+            View and manage monthly AI usage quotas for all users
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -193,6 +210,8 @@ export function QuotaManagementPage() {
             onToggleUnlimited={handleToggleUnlimited}
             onSearch={handleSearch}
             searchValue={searchValue}
+            planTypeFilter={planTypeFilter}
+            onPlanTypeFilterChange={handlePlanTypeFilterChange}
             pagination={{
               page: quotasData?.pageable?.pageNumber ?? 0,
               size: quotasData?.pageable?.pageSize ?? 10,

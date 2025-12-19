@@ -4,6 +4,22 @@
  */
 
 // ===================================================================
+// PLAN TYPE
+// ===================================================================
+
+/**
+ * Subscription plan types
+ */
+export type PlanType = "FREE" | "MONTHLY" | "YEARLY";
+
+/**
+ * Check if a plan type is Pro (MONTHLY or YEARLY)
+ */
+export const isPro = (planType: PlanType): boolean => {
+  return planType === "MONTHLY" || planType === "YEARLY";
+};
+
+// ===================================================================
 // AI FEATURE TYPES
 // ===================================================================
 
@@ -36,25 +52,71 @@ export interface AIFeatureInfo {
 // ===================================================================
 
 /**
- * User AI quota entity
+ * User AI quota entity with subscription-based limits
  */
 export interface UserAIQuota {
   userId: string;
   userEmail: string;
   userFullName: string;
+  
+  // ========== Subscription-Based Quota (NEW) ==========
+  
+  /** User's subscription plan: FREE, MONTHLY, YEARLY */
+  planType: PlanType;
+  
+  /** Date when monthly quota resets */
+  quotaResetDate?: string;
+  
+  /** Days until next quota reset */
+  daysUntilReset?: number;
+  
+  /** Role play sessions used/limit for current month */
+  roleplaySessionsUsed: number;
+  roleplaySessionsLimit: number;
+  
+  /** Flashcard decks generated used/limit for current month */
+  flashcardDecksUsed: number;
+  flashcardDecksLimit: number;
+  
+  /** Grammar exercises generated used/limit for current month */
+  grammarExercisesUsed: number;
+  grammarExercisesLimit: number;
+  
+  /** Total AI requests used/limit for current month */
+  totalRequestsUsed: number;
+  totalRequestsLimit: number;
+  
+  /** Warning flags */
+  quotaWarning?: boolean;
+  quotaCritical?: boolean;
+  
+  // ========== Legacy Fields (Backward Compatibility) ==========
+  
+  /** @deprecated Use roleplaySessionsLimit */
   rolePlayDailyLimit: number;
+  /** @deprecated Use roleplaySessionsUsed */
   rolePlayUsedToday: number;
+  /** @deprecated Use grammarExercisesLimit */
   grammarDailyLimit: number;
+  /** @deprecated Use grammarExercisesUsed */
   grammarUsedToday: number;
+  /** @deprecated Use flashcardDecksLimit */
   flashcardDailyLimit: number;
+  /** @deprecated Use flashcardDecksUsed */
   flashcardUsedToday: number;
+  /** @deprecated Use totalRequestsLimit */
   totalDailyLimit: number;
+  /** @deprecated Use totalRequestsUsed */
   totalUsedToday: number;
+  
+  isPremium?: boolean;
   isUnlimited: boolean;
-  lastResetAt: string;
-  createdAt: string;
-  updatedAt: string;
+  suspended?: boolean;
+  lastResetAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
 
 /**
  * User quota search parameters
@@ -66,6 +128,7 @@ export interface QuotaSearchParams {
   sortBy?: string;
   sortDir?: "asc" | "desc";
   hasExceededLimit?: boolean;
+  planType?: "FREE" | "PRO" | "ALL";
 }
 
 /**
@@ -147,6 +210,16 @@ export interface CostAnalyticsSummary {
   projectedMonthlyCost: number;
   budgetLimit: number;
   budgetUsedPercentage: number;
+  
+  /** Cost breakdown by subscription plan (Free vs Pro) */
+  costByPlan?: {
+    freeCost: number;
+    proCost: number;
+    freeUsers: number;
+    proUsers: number;
+    freeRequests: number;
+    proRequests: number;
+  };
 }
 
 /**
@@ -243,6 +316,7 @@ export interface TopAIUser {
   userId: string;
   userEmail: string;
   userFullName: string;
+  planType?: PlanType;
   totalRequests: number;
   totalCost: number;
   lastUsedAt: string;
@@ -262,3 +336,29 @@ export interface AIUsageOverview {
     data: number[];
   };
 }
+
+// ===================================================================
+// PLAN LIMITS TYPES
+// ===================================================================
+
+/**
+ * Plan-specific quota limits for Free and Pro tiers
+ */
+export interface PlanLimits {
+  // Free tier limits
+  freeRoleplaySessions: number;
+  freeFlashcardDecks: number;
+  freeGrammarExercises: number;
+  freeTotalRequests: number;
+  
+  // Pro tier limits
+  proRoleplaySessions: number;
+  proFlashcardDecks: number;
+  proGrammarExercises: number;
+  proTotalRequests: number;
+  
+  // Warning thresholds (0-100)
+  warningThresholdPercent: number;
+  criticalThresholdPercent: number;
+}
+

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AINav } from "../components";
+import { AINav, PlanBadge } from "../components";
 import { useAIOverview, useAIAlerts } from "../hooks/useAI";
 
 /**
@@ -183,7 +183,7 @@ export function AIOverviewPage() {
                     Quota Management
                   </CardTitle>
                   <CardDescription>
-                    Manage daily AI usage limits for users
+                    Manage monthly AI usage limits for Free and Pro users
                   </CardDescription>
                 </CardHeader>
               </Link>
@@ -239,7 +239,10 @@ export function AIOverviewPage() {
                             {index + 1}.
                           </span>
                           <div>
-                            <p className="font-medium">{user.userFullName}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{user.userFullName}</p>
+                              {user.planType && <PlanBadge planType={user.planType} size="sm" />}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {user.userEmail}
                             </p>

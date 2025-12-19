@@ -234,6 +234,29 @@ export const configApi = {
     );
     return response.data;
   },
+
+  /**
+   * Get plan-specific quota limits
+   */
+  getPlanLimits: async (): Promise<import("../types").PlanLimits> => {
+    const response = await api.get<import("../types").PlanLimits>(
+      "/admin/ai-config/plan-limits"
+    );
+    return response.data;
+  },
+
+  /**
+   * Update plan-specific quota limits
+   */
+  updatePlanLimits: async (
+    data: import("../types").PlanLimits
+  ): Promise<import("../types").PlanLimits> => {
+    const response = await api.put<import("../types").PlanLimits>(
+      "/admin/ai-config/plan-limits",
+      data
+    );
+    return response.data;
+  },
 };
 
 // ===================================================================

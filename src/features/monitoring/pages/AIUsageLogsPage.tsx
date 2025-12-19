@@ -56,9 +56,9 @@ import type {
  */
 const AI_FEATURES: { value: AIFeature | "all"; label: string }[] = [
   { value: "all", label: "All Features" },
-  { value: "MAGIC_FLASHCARD", label: "Magic Flashcard" },
+  { value: "FLASHCARD", label: "Flashcard" },
   { value: "ROLEPLAY", label: "Role Play" },
-  { value: "GRAMMAR_SANDBOX", label: "Grammar Sandbox" },
+  { value: "GRAMMAR", label: "Grammar" },
   { value: "PRONUNCIATION_FEEDBACK", label: "Pronunciation Feedback" },
   { value: "CONTENT_GENERATION", label: "Content Generation" },
 ];
@@ -99,7 +99,7 @@ function getFeatureBadgeVariant(
   feature: AIFeature
 ): "default" | "secondary" | "outline" {
   switch (feature) {
-    case "MAGIC_FLASHCARD":
+    case "FLASHCARD":
       return "default";
     case "ROLEPLAY":
       return "secondary";
@@ -126,8 +126,8 @@ export default function AIUsageLogsPage() {
     () => ({
       ...searchParams,
       featureName: selectedFeature === "all" ? undefined : selectedFeature,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
+      startDate: startDate ? `${startDate}T00:00:00Z` : undefined,
+      endDate: endDate ? `${endDate}T23:59:59Z` : undefined,
     }),
     [searchParams, selectedFeature, startDate, endDate]
   );

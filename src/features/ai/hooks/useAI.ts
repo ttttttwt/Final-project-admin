@@ -382,6 +382,46 @@ export const useToggleFeature = () => {
 };
 
 // ===================================================================
+// PLAN LIMITS HOOKS
+// ===================================================================
+
+/**
+ * Hook to fetch plan-specific quota limits
+ */
+export const usePlanLimits = () => {
+  return useQuery({
+    queryKey: ["ai", "plan-limits"],
+    queryFn: () => configApi.getPlanLimits(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to update plan-specific quota limits
+ */
+export const useUpdatePlanLimits = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: configApi.updatePlanLimits,
+    onSuccess: (updatedLimits) => {
+      queryClient.setQueryData(["ai", "plan-limits"], updatedLimits);
+      toast({
+        title: "Plan limits updated",
+        description: "Free and Pro quota limits have been saved.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Failed to update plan limits",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// ===================================================================
 // ALERTS HOOKS
 // ===================================================================
 

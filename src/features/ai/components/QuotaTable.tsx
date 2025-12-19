@@ -1,10 +1,10 @@
 /**
  * QuotaTable Component
- * Displays user AI quotas with edit, reset, and unlimited toggle actions
+ * Displays user AI quotas with monthly usage, plan badges, and admin actions
  */
 
 import { useState } from "react";
-import { MoreHorizontal, RefreshCw, Infinity, Edit, Search } from "lucide-react";
+import { MoreHorizontal, RefreshCw, Infinity, Edit, Search, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,9 +23,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { UserAIQuota, QuotaSearchParams } from "../types";
+import { PlanBadge } from "./PlanBadge";
 
 interface QuotaTableProps {
   quotas: UserAIQuota[];
@@ -35,6 +49,8 @@ interface QuotaTableProps {
   onToggleUnlimited: (userId: string, isUnlimited: boolean) => void;
   onSearch: (search: string) => void;
   searchValue: string;
+  planTypeFilter: "FREE" | "PRO" | "ALL";
+  onPlanTypeFilterChange: (planType: "FREE" | "PRO" | "ALL") => void;
   pagination: {
     page: number;
     size: number;
@@ -66,7 +82,7 @@ function getUsageStatus(
 }
 
 /**
- * QuotaUsageCell - Displays usage with progress bar
+ * QuotaUsageCell - Displays monthly usage with progress bar
  */
 function QuotaUsageCell({
   used,
@@ -106,6 +122,9 @@ function QuotaTableSkeleton() {
             <Skeleton className="h-3 w-24 mt-1" />
           </TableCell>
           <TableCell>
+            <Skeleton className="h-6 w-16" />
+          </TableCell>
+          <TableCell>
             <Skeleton className="h-8 w-full" />
           </TableCell>
           <TableCell>
@@ -134,6 +153,8 @@ export function QuotaTable({
   onToggleUnlimited,
   onSearch,
   searchValue,
+  planTypeFilter,
+  onPlanTypeFilterChange,
   pagination,
   onPaginationChange,
 }: QuotaTableProps) {
@@ -150,21 +171,35 @@ export function QuotaTable({
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by email or name..."
-            value={searchInput}
-            onChange={handleSearchChange}
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" variant="secondary">
-          Search
-        </Button>
-      </form>
+      {/* Search Bar and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by email or name..."
+              value={searchInput}
+              onChange={handleSearchChange}
+              className="pl-9"
+            />
+          </div>
+          <Button type="submit" variant="secondary">
+            Search
+          </Button>
+        </form>
+
+        {/* Plan Type Filter */}
+        <Select value={planTypeFilter} onValueChange={(value) => onPlanTypeFilterChange(value as "FREE" | "PRO" | "ALL")}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Filter by plan" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Plans</SelectItem>
+            <SelectItem value="FREE">Free Only</SelectItem>
+            <SelectItem value="PRO">Pro Only</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Table */}
       <div className="rounded-md border">
@@ -172,10 +207,11 @@ export function QuotaTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[200px]">User</TableHead>
+              <TableHead className="w-[100px]">Plan</TableHead>
               <TableHead>Role-Play</TableHead>
               <TableHead>Grammar</TableHead>
-              <TableHead>Flashcard</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead>Flashcards</TableHead>
+              <TableHead className="w-[120px]">Reset</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -184,13 +220,13 @@ export function QuotaTable({
               <QuotaTableSkeleton />
             ) : quotas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-muted-foreground">No quotas found</p>
                 </TableCell>
               </TableRow>
             ) : (
               quotas.map((quota) => (
-                <TableRow key={quota.userId}>
+                <TableRow key={quota.userId} className={quota.quotaCritical ? "bg-destructive/5" : quota.quotaWarning ? "bg-yellow-50 dark:bg-yellow-900/10" : ""}>
                   <TableCell>
                     <div>
                       <p className="font-medium">{quota.userFullName}</p>
@@ -200,6 +236,9 @@ export function QuotaTable({
                     </div>
                   </TableCell>
                   <TableCell>
+                    <PlanBadge planType={quota.planType} size="sm" />
+                  </TableCell>
+                  <TableCell>
                     {quota.isUnlimited ? (
                       <Badge variant="secondary" className="gap-1">
                         <Infinity className="h-3 w-3" />
@@ -207,9 +246,9 @@ export function QuotaTable({
                       </Badge>
                     ) : (
                       <QuotaUsageCell
-                        used={quota.rolePlayUsedToday}
-                        limit={quota.rolePlayDailyLimit}
-                        label="Role-Play"
+                        used={quota.roleplaySessionsUsed}
+                        limit={quota.roleplaySessionsLimit}
+                        label="Sessions/mo"
                       />
                     )}
                   </TableCell>
@@ -221,9 +260,9 @@ export function QuotaTable({
                       </Badge>
                     ) : (
                       <QuotaUsageCell
-                        used={quota.grammarUsedToday}
-                        limit={quota.grammarDailyLimit}
-                        label="Grammar"
+                        used={quota.grammarExercisesUsed}
+                        limit={quota.grammarExercisesLimit}
+                        label="Exercises/mo"
                       />
                     )}
                   </TableCell>
@@ -235,24 +274,34 @@ export function QuotaTable({
                       </Badge>
                     ) : (
                       <QuotaUsageCell
-                        used={quota.flashcardUsedToday}
-                        limit={quota.flashcardDailyLimit}
-                        label="Flashcard"
+                        used={quota.flashcardDecksUsed}
+                        limit={quota.flashcardDecksLimit}
+                        label="Decks/mo"
                       />
                     )}
                   </TableCell>
                   <TableCell>
-                    {quota.isUnlimited ? (
-                      <Badge variant="default" className="gap-1">
-                        <Infinity className="h-3 w-3" />
-                        Unlimited
-                      </Badge>
-                    ) : quota.totalUsedToday >= quota.totalDailyLimit ? (
-                      <Badge variant="destructive">Exceeded</Badge>
-                    ) : quota.totalUsedToday >= quota.totalDailyLimit * 0.8 ? (
-                      <Badge variant="secondary">Near Limit</Badge>
+                    {quota.daysUntilReset !== undefined ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>{quota.daysUntilReset}d</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Quota resets in {quota.daysUntilReset} days</p>
+                            {quota.quotaResetDate && (
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(quota.quotaResetDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ) : (
-                      <Badge variant="outline">Normal</Badge>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell>

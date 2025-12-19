@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AINav } from "../components";
+import { AINav, PlanLimitsTab } from "../components";
 import {
   useAISettings,
   useUpdateAISettings,
@@ -74,7 +74,7 @@ export function AIConfigPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">AI Configuration</h1>
           <p className="text-muted-foreground">
-            Manage global AI settings and feature flags
+            Manage global AI settings, plan limits, and feature flags
           </p>
         </div>
         <Button
@@ -90,6 +90,7 @@ export function AIConfigPage() {
       <Tabs defaultValue="global">
         <TabsList>
           <TabsTrigger value="global">Global Settings</TabsTrigger>
+          <TabsTrigger value="plan-limits">Plan Limits</TabsTrigger>
           <TabsTrigger value="features">Feature Management</TabsTrigger>
         </TabsList>
 
@@ -229,6 +230,10 @@ export function AIConfigPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="plan-limits" className="space-y-4">
+          <PlanLimitsTab />
         </TabsContent>
 
         <TabsContent value="features" className="space-y-4">

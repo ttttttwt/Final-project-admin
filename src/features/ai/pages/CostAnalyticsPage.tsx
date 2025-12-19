@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { AINav, CostBreakdownChart, CostTrendChart, SetBudgetDialog } from "../components";
+import { AINav, CostBreakdownChart, CostTrendChart, SetBudgetDialog, CostByPlanCard } from "../components";
 import {
   useCostAnalytics,
   useCostProjection,
@@ -276,18 +276,24 @@ export function CostAnalyticsPage() {
 
       {/* Charts Row */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Cost Breakdown */}
+        {/* Cost Breakdown by Feature */}
         <CostBreakdownChart
           data={analyticsData?.costByFeature ?? []}
           isLoading={analyticsLoading}
         />
 
-        {/* Cost Trend */}
-        <CostTrendChart
-          data={analyticsData?.dailyCosts ?? []}
+        {/* Cost by Plan */}
+        <CostByPlanCard
+          data={analyticsData?.costByPlan}
           isLoading={analyticsLoading}
         />
       </div>
+
+      {/* Cost Trend */}
+      <CostTrendChart
+        data={analyticsData?.dailyCosts ?? []}
+        isLoading={analyticsLoading}
+      />
 
       {/* Token Usage */}
       <Card>

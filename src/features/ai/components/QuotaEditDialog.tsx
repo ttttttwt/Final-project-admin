@@ -1,11 +1,12 @@
 /**
  * QuotaEditDialog Component
- * Dialog for editing user AI quota limits
+ * Dialog for editing user AI quota limits with subscription awareness
  */
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Crown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,21 +27,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Progress } from "@/components/ui/progress";
 import type { UserAIQuota, UpdateQuotaInput } from "../types";
+import { isPro } from "../types";
+import { PlanBadge } from "./PlanBadge";
 
 /**
  * Validation schema for quota form
  */
 const quotaFormSchema = z.object({
-  rolePlayDailyLimit: z
+  roleplayLimit: z
     .number()
     .min(0, "Must be at least 0")
     .max(1000, "Maximum 1000"),
-  grammarDailyLimit: z
+  grammarLimit: z
     .number()
     .min(0, "Must be at least 0")
     .max(1000, "Maximum 1000"),
-  flashcardDailyLimit: z
+  flashcardLimit: z
     .number()
     .min(0, "Must be at least 0")
     .max(1000, "Maximum 1000"),
@@ -57,6 +61,30 @@ interface QuotaEditDialogProps {
   isSubmitting: boolean;
 }
 
+/**
+ * Usage progress bar component
+ */
+function UsageProgress({ used, limit, label }: { used: number; limit: number; label: string }) {
+  const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+  const isWarning = percentage >= 80;
+  const isCritical = percentage >= 95;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={isCritical ? "text-destructive font-medium" : isWarning ? "text-yellow-600" : ""}>
+          {used}/{limit} ({Math.round(percentage)}%)
+        </span>
+      </div>
+      <Progress
+        value={percentage}
+        className={`h-2 ${isCritical ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-yellow-500" : ""}`}
+      />
+    </div>
+  );
+}
+
 export function QuotaEditDialog({
   quota,
   open,
@@ -67,18 +95,18 @@ export function QuotaEditDialog({
   const form = useForm<QuotaFormValues>({
     resolver: zodResolver(quotaFormSchema),
     defaultValues: {
-      rolePlayDailyLimit: quota?.rolePlayDailyLimit ?? 20,
-      grammarDailyLimit: quota?.grammarDailyLimit ?? 50,
-      flashcardDailyLimit: quota?.flashcardDailyLimit ?? 20,
+      roleplayLimit: quota?.roleplaySessionsLimit ?? 10,
+      grammarLimit: quota?.grammarExercisesLimit ?? 75,
+      flashcardLimit: quota?.flashcardDecksLimit ?? 10,
       isUnlimited: quota?.isUnlimited ?? false,
     },
     values: quota
       ? {
-          rolePlayDailyLimit: quota.rolePlayDailyLimit,
-          grammarDailyLimit: quota.grammarDailyLimit,
-          flashcardDailyLimit: quota.flashcardDailyLimit,
-          isUnlimited: quota.isUnlimited,
-        }
+        roleplayLimit: quota.roleplaySessionsLimit,
+        grammarLimit: quota.grammarExercisesLimit,
+        flashcardLimit: quota.flashcardDecksLimit,
+        isUnlimited: quota.isUnlimited,
+      }
       : undefined,
   });
 
@@ -87,28 +115,43 @@ export function QuotaEditDialog({
   const handleSubmit = (values: QuotaFormValues) => {
     if (!quota) return;
     onSubmit(quota.userId, {
-      rolePlayDailyLimit: values.rolePlayDailyLimit,
-      grammarDailyLimit: values.grammarDailyLimit,
-      flashcardDailyLimit: values.flashcardDailyLimit,
+      rolePlayDailyLimit: values.roleplayLimit,
+      grammarDailyLimit: values.grammarLimit,
+      flashcardDailyLimit: values.flashcardLimit,
       isUnlimited: values.isUnlimited,
     });
   };
 
   if (!quota) return null;
 
+  const isProUser = isPro(quota.planType);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Edit AI Quota</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Edit AI Quota
+            <PlanBadge planType={quota.planType} />
+          </DialogTitle>
           <DialogDescription>
-            Update daily AI usage limits for {quota.userFullName} (
-            {quota.userEmail})
+            Update monthly AI usage limits for {quota.userFullName} ({quota.userEmail})
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Plan Info Banner */}
+            {isProUser && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800">
+                <Crown className="h-5 w-5 text-amber-500" />
+                <div className="text-sm">
+                  <span className="font-medium text-amber-700 dark:text-amber-400">Pro User</span>
+                  <span className="text-muted-foreground ml-1">— Higher default limits apply</span>
+                </div>
+              </div>
+            )}
+
             {/* Unlimited Toggle */}
             <FormField
               control={form.control}
@@ -118,7 +161,7 @@ export function QuotaEditDialog({
                   <div className="space-y-0.5">
                     <FormLabel>Unlimited Access</FormLabel>
                     <FormDescription>
-                      Remove all daily limits for this user
+                      Remove all monthly limits for this user
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -133,102 +176,106 @@ export function QuotaEditDialog({
 
             {/* Quota Limits */}
             <div className={isUnlimited ? "opacity-50 pointer-events-none" : ""}>
-              <FormField
-                control={form.control}
-                name="rolePlayDailyLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role-Play Daily Limit</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                        disabled={isUnlimited}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Maximum role-play scenarios per day
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="roleplayLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role-Play Sessions (Monthly)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                          disabled={isUnlimited}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {isProUser ? "Pro default: 50 sessions/month" : "Free default: 10 sessions/month"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="grammarDailyLimit"
-                render={({ field }) => (
-                  <FormItem className="mt-4">
-                    <FormLabel>Grammar Daily Limit</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                        disabled={isUnlimited}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Maximum grammar exercises per day
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="grammarLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grammar Exercises (Monthly)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                          disabled={isUnlimited}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {isProUser ? "Pro default: 300 exercises/month" : "Free default: 75 exercises/month"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="flashcardDailyLimit"
-                render={({ field }) => (
-                  <FormItem className="mt-4">
-                    <FormLabel>Flashcard Daily Limit</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
-                        disabled={isUnlimited}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Maximum flashcard generations per day
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="flashcardLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Flashcard Decks (Monthly)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                          disabled={isUnlimited}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {isProUser ? "Pro default: 30 decks/month" : "Free default: 10 decks/month"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Current Usage Info */}
-            <div className="rounded-lg bg-muted p-3 text-sm">
-              <p className="font-medium mb-2">Current Usage Today:</p>
-              <div className="grid grid-cols-3 gap-2 text-muted-foreground">
-                <div>
-                  <span className="block text-foreground font-medium">
-                    {quota.rolePlayUsedToday}
+            <div className="rounded-lg bg-muted p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-sm">Current Monthly Usage</p>
+                {quota.daysUntilReset !== undefined && (
+                  <span className="text-xs text-muted-foreground">
+                    Resets in {quota.daysUntilReset} days
                   </span>
-                  Role-Play
-                </div>
-                <div>
-                  <span className="block text-foreground font-medium">
-                    {quota.grammarUsedToday}
-                  </span>
-                  Grammar
-                </div>
-                <div>
-                  <span className="block text-foreground font-medium">
-                    {quota.flashcardUsedToday}
-                  </span>
-                  Flashcard
-                </div>
+                )}
               </div>
+              <UsageProgress
+                used={quota.roleplaySessionsUsed}
+                limit={quota.roleplaySessionsLimit}
+                label="Role-Play"
+              />
+              <UsageProgress
+                used={quota.grammarExercisesUsed}
+                limit={quota.grammarExercisesLimit}
+                label="Grammar"
+              />
+              <UsageProgress
+                used={quota.flashcardDecksUsed}
+                limit={quota.flashcardDecksLimit}
+                label="Flashcards"
+              />
             </div>
 
             <DialogFooter>

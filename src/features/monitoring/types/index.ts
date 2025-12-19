@@ -117,9 +117,9 @@ export interface HealthCard {
  * AI feature types
  */
 export type AIFeature =
-  | "MAGIC_FLASHCARD"
+  | "FLASHCARD"
   | "ROLEPLAY"
-  | "GRAMMAR_SANDBOX"
+  | "GRAMMAR"
   | "PRONUNCIATION_FEEDBACK"
   | "CONTENT_GENERATION";
 
