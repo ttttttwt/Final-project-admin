@@ -173,7 +173,7 @@ export function UserListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="USER">User</SelectItem>
+                <SelectItem value="LEARNER">User</SelectItem>
                 <SelectItem value="CONTENT_MANAGER">Content Manager</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
               </SelectContent>

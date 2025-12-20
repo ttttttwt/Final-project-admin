@@ -240,27 +240,23 @@ export interface CostAnalyticsParams {
  * Global AI feature configuration
  */
 export interface AIFeatureConfig {
-  featureName: AIFeatureName;
-  isEnabled: boolean;
-  defaultDailyLimit: number;
-  premiumMultiplier: number;
+  featureId: string;
+  name: string;
+  enabled: boolean;
   modelId: string;
-  maxTokensPerRequest: number;
-  temperatureDefault: number;
-  systemPromptTemplate?: string;
-  updatedAt: string;
-  updatedBy?: string;
+  maxTokens: number;
+  temperature: number;
+  dailyLimit: number;
 }
 
 /**
  * Update AI feature config input
  */
 export interface UpdateAIFeatureConfigInput {
-  isEnabled?: boolean;
-  defaultDailyLimit?: number;
-  premiumMultiplier?: number;
-  maxTokensPerRequest?: number;
-  temperatureDefault?: number;
+  enabled?: boolean;
+  dailyLimit?: number;
+  maxTokens?: number;
+  temperature?: number;
 }
 
 /**

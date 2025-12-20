@@ -102,7 +102,7 @@ export function UserTable({
         <div className="flex gap-1">
           {user.roles.map((role) => (
             <Badge key={role} variant="outline">
-              {role}
+              {role === "LEARNER" ? "User" : role === "CONTENT_MANAGER" ? "Content Manager" : role === "ADMIN" ? "Admin" : role}
             </Badge>
           ))}
         </div>

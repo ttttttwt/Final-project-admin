@@ -31,8 +31,8 @@ export const AI_KEYS = {
   
   // Config
   settings: ["ai", "config", "settings"] as const,
-  featureConfig: (featureName: string) =>
-    ["ai", "config", "features", featureName] as const,
+  featureConfig: (featureId: string) =>
+    ["ai", "config", "features", featureId] as const,
   
   // Alerts
   alerts: (params?: { unreadOnly?: boolean; limit?: number }) =>
@@ -313,11 +313,11 @@ export const useUpdateAISettings = () => {
 /**
  * Hook to fetch feature-specific config
  */
-export const useFeatureConfig = (featureName: string, options?: { enabled?: boolean }) => {
+export const useFeatureConfig = (featureId: string, options?: { enabled?: boolean }) => {
   return useQuery({
-    queryKey: AI_KEYS.featureConfig(featureName),
-    queryFn: () => configApi.getFeatureConfig(featureName),
-    enabled: options?.enabled ?? !!featureName,
+    queryKey: AI_KEYS.featureConfig(featureId),
+    queryFn: () => configApi.getFeatureConfig(featureId),
+    enabled: options?.enabled ?? !!featureId,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -330,18 +330,18 @@ export const useUpdateFeatureConfig = () => {
   
   return useMutation({
     mutationFn: ({
-      featureName,
+      featureId,
       data,
     }: {
-      featureName: string;
+      featureId: string;
       data: UpdateAIFeatureConfigInput;
-    }) => configApi.updateFeatureConfig(featureName, data),
-    onSuccess: (updatedConfig, { featureName }) => {
-      queryClient.setQueryData(AI_KEYS.featureConfig(featureName), updatedConfig);
+    }) => configApi.updateFeatureConfig(featureId, data),
+    onSuccess: (updatedConfig, { featureId }) => {
+      queryClient.setQueryData(AI_KEYS.featureConfig(featureId), updatedConfig);
       queryClient.invalidateQueries({ queryKey: AI_KEYS.settings });
       toast({
         title: "Feature updated",
-        description: `${featureName} configuration has been saved.`,
+        description: `${featureId} configuration has been saved.`,
       });
     },
     onError: (error) => {
@@ -361,14 +361,14 @@ export const useToggleFeature = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ featureName, isEnabled }: { featureName: string; isEnabled: boolean }) =>
-      configApi.toggleFeature(featureName, isEnabled),
-    onSuccess: (updatedConfig, { featureName, isEnabled }) => {
-      queryClient.setQueryData(AI_KEYS.featureConfig(featureName), updatedConfig);
+    mutationFn: ({ featureId, enabled }: { featureId: string; enabled: boolean }) =>
+      configApi.toggleFeature(featureId, enabled),
+    onSuccess: (updatedConfig, { featureId, enabled }) => {
+      queryClient.setQueryData(AI_KEYS.featureConfig(featureId), updatedConfig);
       queryClient.invalidateQueries({ queryKey: AI_KEYS.settings });
       toast({
-        title: isEnabled ? "Feature enabled" : "Feature disabled",
-        description: `${featureName} has been ${isEnabled ? "enabled" : "disabled"}.`,
+        title: enabled ? "Feature enabled" : "Feature disabled",
+        description: `${featureId} has been ${enabled ? "enabled" : "disabled"}.`,
       });
     },
     onError: (error) => {

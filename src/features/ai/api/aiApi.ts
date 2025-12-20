@@ -200,9 +200,9 @@ export const configApi = {
   /**
    * Get feature-specific configuration
    */
-  getFeatureConfig: async (featureName: string): Promise<AIFeatureConfig> => {
+  getFeatureConfig: async (featureId: string): Promise<AIFeatureConfig> => {
     const response = await api.get<AIFeatureConfig>(
-      `/admin/ai-config/features/${featureName}`
+      `/admin/ai-config/features/${featureId}`
     );
     return response.data;
   },
@@ -211,11 +211,11 @@ export const configApi = {
    * Update feature-specific configuration
    */
   updateFeatureConfig: async (
-    featureName: string,
+    featureId: string,
     data: UpdateAIFeatureConfigInput
   ): Promise<AIFeatureConfig> => {
     const response = await api.put<AIFeatureConfig>(
-      `/admin/ai-config/features/${featureName}`,
+      `/admin/ai-config/features/${featureId}`,
       data
     );
     return response.data;
@@ -225,12 +225,12 @@ export const configApi = {
    * Toggle feature enabled status
    */
   toggleFeature: async (
-    featureName: string,
-    isEnabled: boolean
+    featureId: string,
+    enabled: boolean
   ): Promise<AIFeatureConfig> => {
     const response = await api.patch<AIFeatureConfig>(
-      `/admin/ai-config/features/${featureName}/toggle`,
-      { isEnabled }
+      `/admin/ai-config/features/${featureId}/toggle`,
+      { enabled }
     );
     return response.data;
   },

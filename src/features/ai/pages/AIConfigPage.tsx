@@ -47,8 +47,8 @@ export function AIConfigPage() {
     updateSettingsMutation.mutate(formData);
   };
 
-  const handleToggleFeature = (featureName: string, isEnabled: boolean) => {
-    toggleFeatureMutation.mutate({ featureName, isEnabled });
+  const handleToggleFeature = (featureId: string, enabled: boolean) => {
+    toggleFeatureMutation.mutate({ featureId, enabled });
   };
 
   if (error) {
@@ -251,19 +251,19 @@ export function AIConfigPage() {
                 <div className="space-y-6">
                   {settings?.features.map((feature: AIFeatureConfig) => (
                     <div
-                      key={feature.featureName}
+                      key={feature.featureId}
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div>
-                        <h3 className="font-medium">{feature.featureName}</h3>
+                        <h3 className="font-medium">{feature.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {feature.isEnabled ? "Enabled" : "Disabled"}
+                          {feature.enabled ? "Enabled" : "Disabled"}
                         </p>
                       </div>
                       <Switch
-                        checked={feature.isEnabled}
+                        checked={feature.enabled}
                         onCheckedChange={(checked) =>
-                          handleToggleFeature(feature.featureName, checked)
+                          handleToggleFeature(feature.featureId, checked)
                         }
                         disabled={toggleFeatureMutation.isPending}
                       />

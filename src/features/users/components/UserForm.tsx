@@ -46,7 +46,7 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
       firstName: initialData?.firstName || "",
       lastName: initialData?.lastName || "",
       email: initialData?.email || "",
-      role: initialData?.roles[0] || "USER",
+      role: initialData?.roles[0] || "LEARNER",
       isActive: initialData?.isActive ?? true,
       password: "",
     },
@@ -138,7 +138,7 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="USER">User</SelectItem>
+                  <SelectItem value="LEARNER">User</SelectItem>
                   <SelectItem value="CONTENT_MANAGER">Content Manager</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>

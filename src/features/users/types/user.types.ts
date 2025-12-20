@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "CONTENT_MANAGER" | "USER";
+export type UserRole = "ADMIN" | "CONTENT_MANAGER" | "LEARNER";
 export type UserStatus = "ACTIVE" | "INACTIVE";
 
 export interface UserSearchParams {
