@@ -103,11 +103,18 @@ function PlanEditDialog({
     onOpenChange: (open: boolean) => void;
 }) {
     const [price, setPrice] = useState(plan.price.toString());
+    const [originalPrice, setOriginalPrice] = useState(plan.originalPrice?.toString() || '');
     const updateMutation = useUpdatePlan();
 
     const handleSave = () => {
         updateMutation.mutate(
-            { id: plan.id, updates: { price: parseFloat(price) } },
+            { 
+                id: plan.id, 
+                updates: { 
+                    price: parseFloat(price),
+                    originalPrice: originalPrice ? parseFloat(originalPrice) : null
+                } 
+            },
             { onSuccess: () => onOpenChange(false) }
         );
     };
@@ -121,7 +128,7 @@ function PlanEditDialog({
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Giá hiện tại</Label>
+                        <Label>Giá hiện tại (Giá bán)</Label>
                         <div className="relative">
                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -133,6 +140,25 @@ function PlanEditDialog({
                             />
                         </div>
                     </div>
+                    
+                    <div className="space-y-2">
+                        <Label>Giá gốc (Giá trước khi giảm)</Label>
+                        <div className="relative">
+                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="number"
+                                value={originalPrice}
+                                onChange={(e) => setOriginalPrice(e.target.value)}
+                                className="pl-9"
+                                step="0.01"
+                                placeholder="Để trống nếu không có giảm giá"
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Nếu nhập giá gốc cao hơn giá bán, hệ thống sẽ hiển thị phần trăm giảm giá.
+                        </p>
+                    </div>
+
                     <p className="text-sm text-muted-foreground">
                         Lưu ý: Thay đổi giá sẽ được áp dụng cho đăng ký mới. Người dùng hiện tại sẽ được thông báo khi gia hạn.
                     </p>
