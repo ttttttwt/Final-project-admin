@@ -48,13 +48,13 @@ export default function UserDistributionChart({ data }: UserDistributionChartPro
                 paddingAngle={5}
                 dataKey="value"
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--background))", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--background))",
                   borderColor: "hsl(var(--border))",
                   borderRadius: "var(--radius)",
                 }}

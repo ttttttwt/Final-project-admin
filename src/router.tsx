@@ -31,6 +31,7 @@ import {
   CostAnalyticsPage,
   AIConfigPage,
   AIAlertsPage,
+  JobMonitorPage,
 } from "@/features/ai";
 import SubscriptionManagementPage from "@/features/subscriptions/SubscriptionManagementPage";
 import AnalyticsDashboardPage from "@/features/analytics/AnalyticsDashboardPage";
@@ -157,6 +158,14 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <AIAlertsPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "ai/jobs",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <JobMonitorPage />
           </RoleGuard>
         ),
       },

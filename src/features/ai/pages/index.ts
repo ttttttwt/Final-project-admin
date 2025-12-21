@@ -8,3 +8,4 @@ export { QuotaManagementPage } from "./QuotaManagementPage";
 export { CostAnalyticsPage } from "./CostAnalyticsPage";
 export { AIConfigPage } from "./AIConfigPage";
 export { AIAlertsPage } from "./AIAlertsPage";
+export { JobMonitorPage } from "./JobMonitorPage";
