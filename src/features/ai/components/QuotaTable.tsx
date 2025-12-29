@@ -211,6 +211,7 @@ export function QuotaTable({
               <TableHead>Role-Play</TableHead>
               <TableHead>Grammar</TableHead>
               <TableHead>Flashcards</TableHead>
+              <TableHead>Materials</TableHead>
               <TableHead className="w-[120px]">Reset</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -277,6 +278,20 @@ export function QuotaTable({
                         used={quota.flashcardDecksUsed}
                         limit={quota.flashcardDecksLimit}
                         label="Decks/mo"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {quota.isUnlimited ? (
+                      <Badge variant="secondary" className="gap-1">
+                        <Infinity className="h-3 w-3" />
+                        Unlimited
+                      </Badge>
+                    ) : (
+                      <QuotaUsageCell
+                        used={quota.customMaterialsUsed}
+                        limit={quota.customMaterialsLimit}
+                        label="Materials/mo"
                       />
                     )}
                   </TableCell>

@@ -48,6 +48,10 @@ const quotaFormSchema = z.object({
     .number()
     .min(0, "Must be at least 0")
     .max(1000, "Maximum 1000"),
+  customMaterialsLimit: z
+    .number()
+    .min(0, "Must be at least 0")
+    .max(100, "Maximum 100"),
   isUnlimited: z.boolean(),
 });
 
@@ -105,6 +109,7 @@ export function QuotaEditDialog({
         roleplayLimit: quota.roleplaySessionsLimit,
         grammarLimit: quota.grammarExercisesLimit,
         flashcardLimit: quota.flashcardDecksLimit,
+        customMaterialsLimit: quota.customMaterialsLimit,
         isUnlimited: quota.isUnlimited,
       }
       : undefined,
@@ -118,6 +123,7 @@ export function QuotaEditDialog({
       rolePlayDailyLimit: values.roleplayLimit,
       grammarDailyLimit: values.grammarLimit,
       flashcardDailyLimit: values.flashcardLimit,
+      customMaterialsLimit: values.customMaterialsLimit,
       isUnlimited: values.isUnlimited,
     });
   };
@@ -248,6 +254,30 @@ export function QuotaEditDialog({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="customMaterialsLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Custom Materials (Monthly)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                          disabled={isUnlimited}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {isProUser ? "Pro default: 10 materials/month" : "Free default: 10 materials/month"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 
@@ -275,6 +305,11 @@ export function QuotaEditDialog({
                 used={quota.flashcardDecksUsed}
                 limit={quota.flashcardDecksLimit}
                 label="Flashcards"
+              />
+              <UsageProgress
+                used={quota.customMaterialsUsed}
+                limit={quota.customMaterialsLimit}
+                label="Materials"
               />
             </div>
 

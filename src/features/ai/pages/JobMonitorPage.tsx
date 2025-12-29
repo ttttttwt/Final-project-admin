@@ -35,6 +35,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { RefreshCw, Play, RotateCcw, Trash2, AlertTriangle, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
+import { AINav } from '../components/AINav';
 import { useJobs, useJobStats, useRetryJob, useResetRetryCount, useDeleteJob } from '../hooks/useCustomMaterialAdmin';
 import type { AdminJob, JobStatus, JobQueryParams } from '../types/customMaterialAdmin';
 
@@ -89,7 +90,8 @@ export function JobMonitorPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="container mx-auto p-6 space-y-6">
+            <AINav />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

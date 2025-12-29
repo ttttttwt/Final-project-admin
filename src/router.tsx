@@ -162,7 +162,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "ai/jobs",
+        path: "ai/job-monitor",
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <JobMonitorPage />

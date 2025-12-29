@@ -82,6 +82,10 @@ export interface UserAIQuota {
   grammarExercisesUsed: number;
   grammarExercisesLimit: number;
   
+  /** Custom materials created used/limit for current month */
+  customMaterialsUsed: number;
+  customMaterialsLimit: number;
+  
   /** Total AI requests used/limit for current month */
   totalRequestsUsed: number;
   totalRequestsLimit: number;
@@ -153,6 +157,7 @@ export interface UpdateQuotaInput {
   rolePlayDailyLimit?: number;
   grammarDailyLimit?: number;
   flashcardDailyLimit?: number;
+  customMaterialsLimit?: number;
   isUnlimited?: boolean;
 }
 

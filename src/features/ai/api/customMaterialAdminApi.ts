@@ -9,7 +9,7 @@ import type {
   JobQueryParams,
 } from '../types/customMaterialAdmin';
 
-const BASE_URL = '/api/v1/admin/custom-materials';
+const BASE_URL = '/admin/custom-materials';
 
 /**
  * Admin API functions for Custom Material management.

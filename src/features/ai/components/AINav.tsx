@@ -5,7 +5,7 @@
 
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Bot, DollarSign, Settings2, Users, Bell } from "lucide-react";
+import { Bot, DollarSign, Settings2, Users, Bell, Activity } from "lucide-react";
 
 const aiNavLinks = [
   {
@@ -23,6 +23,11 @@ const aiNavLinks = [
     title: "Cost Analytics",
     href: "/ai/costs",
     icon: DollarSign,
+  },
+  {
+    title: "Job Monitor",
+    href: "/ai/job-monitor",
+    icon: Activity,
   },
   {
     title: "Configuration",
