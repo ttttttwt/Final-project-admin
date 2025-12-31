@@ -34,6 +34,7 @@ import {
   JobMonitorPage,
 } from "@/features/ai";
 import SubscriptionManagementPage from "@/features/subscriptions/SubscriptionManagementPage";
+import PaymentManagementPage from "@/features/payments/PaymentManagementPage";
 import AnalyticsDashboardPage from "@/features/analytics/AnalyticsDashboardPage";
 
 const router = createBrowserRouter([
@@ -186,6 +187,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "payments",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <PaymentManagementPage />
+          </RoleGuard>
+        ),
+      },
+      {
         path: "monitoring/health",
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
@@ -230,6 +239,14 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard allowedRoles={["ADMIN"]}>
             <SubscriptionManagementPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "payments",
+        element: (
+          <RoleGuard allowedRoles={["ADMIN"]}>
+            <PaymentManagementPage />
           </RoleGuard>
         ),
       },

@@ -6,9 +6,12 @@ import type {
   CreatePromoCodeRequest,
   SubscriptionStats,
   PagedPromoCodes,
+  PaymentDTO,
+  PagedPayments,
 } from './types';
 
 const BASE_URL = '/admin/subscriptions';
+const PAYMENTS_URL = '/admin/payments';
 
 /**
  * API functions for subscription management
@@ -82,6 +85,21 @@ export const subscriptionApi = {
     const response = await api.get<PromoCodeDTO>(
       `${BASE_URL}/promo-codes/validate?code=${code}&planType=${planType}`
     );
+    return response.data;
+  },
+
+  // ========== Payments ==========
+
+  getPayments: async (page = 0, size = 10, status?: string, search?: string): Promise<PagedPayments> => {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    const response = await api.get<PagedPayments>(`${PAYMENTS_URL}?${params}`);
+    return response.data;
+  },
+
+  refundPayment: async (id: string): Promise<PaymentDTO> => {
+    const response = await api.post<PaymentDTO>(`${PAYMENTS_URL}/${id}/refund`);
     return response.data;
   },
 

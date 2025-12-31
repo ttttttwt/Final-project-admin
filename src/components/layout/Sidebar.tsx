@@ -12,6 +12,7 @@ import {
   Bot,
   BarChart3,
   CreditCard,
+  Receipt,
   Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,12 @@ export default function Sidebar() {
       title: "Subscriptions",
       href: "/subscriptions",
       icon: CreditCard,
+      show: isAdmin,
+    },
+    {
+      title: "Payments",
+      href: "/payments",
+      icon: Receipt,
       show: isAdmin,
     },
     {

@@ -8,6 +8,7 @@ const QUERY_KEYS = {
   effectivePlans: ['admin', 'subscriptions', 'plans', 'effective'] as const,
   promoCodes: ['admin', 'subscriptions', 'promo-codes'] as const,
   validPromoCodes: ['admin', 'subscriptions', 'promo-codes', 'valid'] as const,
+  payments: ['admin', 'payments'] as const,
   stats: ['admin', 'subscriptions', 'stats'] as const,
 };
 
@@ -122,5 +123,25 @@ export function useSubscriptionStats() {
   return useQuery({
     queryKey: QUERY_KEYS.stats,
     queryFn: subscriptionApi.getStats,
+  });
+}
+
+// ========== Payments Hooks ==========
+
+export function usePayments(page = 0, size = 10, status?: string, search?: string) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.payments, page, size, status, search],
+    queryFn: () => subscriptionApi.getPayments(page, size, status, search),
+  });
+}
+
+export function useRefundPayment() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => subscriptionApi.refundPayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.payments });
+    },
   });
 }

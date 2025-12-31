@@ -93,3 +93,32 @@ export interface PagedPromoCodes {
     pageSize: number;
   };
 }
+
+// Payment
+export interface PaymentDTO {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  subscriptionId: string | null;
+  stripePaymentId: string;
+  stripeInvoiceId: string;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED' | 'CANCELED';
+  paymentType: 'SUBSCRIPTION_NEW' | 'SUBSCRIPTION_RENEWAL' | 'SUBSCRIPTION_UPGRADE' | 'REFUND';
+  description: string | null;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+// Paginated payments response
+export interface PagedPayments {
+  content: PaymentDTO[];
+  totalPages: number;
+  totalElements: number;
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+}
