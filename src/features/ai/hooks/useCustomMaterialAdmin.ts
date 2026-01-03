@@ -60,6 +60,7 @@ export function useJobs(params?: JobQueryParams) {
   return useQuery({
     queryKey: customMaterialKeys.jobList(params),
     queryFn: () => api.getJobs(params),
+    refetchInterval: 30000, // Refresh every 30 seconds to show latest job status
   });
 }
 

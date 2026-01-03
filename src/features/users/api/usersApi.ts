@@ -3,8 +3,8 @@ import type { User, UserDetail, CreateUserInput, UpdateUserInput } from "../type
 import type { Page } from "@/types/api.types";
 
 export const usersApi = {
-  getUsers: async (page = 0, size = 10, search?: string, role?: string) => {
-    const params = { page, size, search, role };
+  getUsers: async (page = 0, size = 10, search?: string, role?: string, planType?: string) => {
+    const params = { page, size, search, role, planType };
     const response = await api.get<Page<User>>("/admin/users", { params });
     return response.data;
   },

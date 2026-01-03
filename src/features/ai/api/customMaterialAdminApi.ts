@@ -50,6 +50,10 @@ export async function getJobs(params?: JobQueryParams): Promise<PageResponse<Adm
   if (params?.stuckOnly) searchParams.append('stuckOnly', 'true');
   if (params?.page !== undefined) searchParams.append('page', String(params.page));
   if (params?.size !== undefined) searchParams.append('size', String(params.size));
+  // Add sorting - Spring uses 'sort' param with format 'field,direction'
+  if (params?.sortBy) {
+    searchParams.append('sort', `${params.sortBy},${params.sortDir || 'desc'}`);
+  }
   
   const query = searchParams.toString();
   const url = `${BASE_URL}/jobs${query ? `?${query}` : ''}`;

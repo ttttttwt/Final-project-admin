@@ -25,6 +25,7 @@ import { useUsers } from "../hooks/useUsers";
 import type {
   UserRole,
   UserStatus,
+  PlanTypeFilter,
   UserSearchParams,
 } from "../types/user.types";
 
@@ -85,6 +86,15 @@ export function UserListPage() {
       ...prev,
       page: 0,
       status: value === "all" ? undefined : (value as UserStatus),
+    }));
+  };
+
+  // Handle plan type filter change
+  const handlePlanTypeChange = (value: string) => {
+    setParams((prev) => ({
+      ...prev,
+      page: 0,
+      planType: value === "all" ? undefined : (value as PlanTypeFilter),
     }));
   };
 
@@ -191,6 +201,21 @@ export function UserListPage() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="INACTIVE">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Plan Type Filter */}
+            <Select
+              value={params.planType || "all"}
+              onValueChange={handlePlanTypeChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Plans</SelectItem>
+                <SelectItem value="FREE">Free</SelectItem>
+                <SelectItem value="PRO">Pro</SelectItem>
               </SelectContent>
             </Select>
           </div>

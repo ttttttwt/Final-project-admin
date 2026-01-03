@@ -17,12 +17,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AINav, QuotaTable, QuotaEditDialog } from "../components";
 import {
   useQuotas,
+  useQuotaSummaryStats,
   useUpdateQuota,
   useResetQuota,
   useSetUnlimited,
 } from "../hooks/useAI";
 import type { UserAIQuota, QuotaSearchParams, UpdateQuotaInput } from "../types";
-import { isPro } from "../types";
 
 export function QuotaManagementPage() {
   // State
@@ -32,6 +32,8 @@ export function QuotaManagementPage() {
   });
   const [searchValue, setSearchValue] = useState("");
   const [planTypeFilter, setPlanTypeFilter] = useState<"FREE" | "PRO" | "ALL">("ALL");
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [editingQuota, setEditingQuota] = useState<UserAIQuota | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -41,8 +43,10 @@ export function QuotaManagementPage() {
       ...searchParams,
       search: searchValue || undefined,
       planType: planTypeFilter !== "ALL" ? planTypeFilter : undefined,
+      sortBy,
+      sortDir,
     }),
-    [searchParams, searchValue, planTypeFilter]
+    [searchParams, searchValue, planTypeFilter, sortBy, sortDir]
   );
 
   // Queries and mutations
@@ -53,9 +57,18 @@ export function QuotaManagementPage() {
     refetch,
   } = useQuotas(effectiveParams);
 
+  // Fetch summary stats from API (accurate count across all pages)
+  const { data: summaryStats, refetch: refetchStats } = useQuotaSummaryStats();
+
   const updateQuotaMutation = useUpdateQuota();
   const resetQuotaMutation = useResetQuota();
   const setUnlimitedMutation = useSetUnlimited();
+
+  // Combined refetch for both queries
+  const handleRefresh = () => {
+    refetch();
+    refetchStats();
+  };
 
   // Handlers
   const handleSearch = (search: string) => {
@@ -65,6 +78,12 @@ export function QuotaManagementPage() {
 
   const handlePlanTypeFilterChange = (filter: "FREE" | "PRO" | "ALL") => {
     setPlanTypeFilter(filter);
+    setSearchParams((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleSortChange = (newSortBy: string, newSortDir: "asc" | "desc") => {
+    setSortBy(newSortBy);
+    setSortDir(newSortDir);
     setSearchParams((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -117,19 +136,26 @@ export function QuotaManagementPage() {
     );
   }
 
-  // Calculate summary stats with plan breakdown
+  // Calculate summary stats with plan breakdown - use API stats for accurate counts
   const stats = useMemo(() => {
-    if (!quotasData?.content) {
-      return { total: 0, free: 0, pro: 0, exceeded: 0, unlimited: 0 };
+    if (summaryStats) {
+      return {
+        total: summaryStats.totalUsers,
+        free: summaryStats.freeUsers,
+        pro: summaryStats.proUsers,
+        exceeded: summaryStats.quotaExceeded,
+        unlimited: summaryStats.unlimitedUsers,
+      };
     }
+    // Fallback to totalElements if summary stats not loaded
     return {
-      total: quotasData.totalElements,
-      free: quotasData.content.filter((q) => !isPro(q.planType)).length,
-      pro: quotasData.content.filter((q) => isPro(q.planType)).length,
-      exceeded: quotasData.content.filter((q) => q.quotaCritical).length,
-      unlimited: quotasData.content.filter((q) => q.isUnlimited).length,
+      total: quotasData?.totalElements ?? 0,
+      free: 0,
+      pro: 0,
+      exceeded: 0,
+      unlimited: 0,
     };
-  }, [quotasData]);
+  }, [summaryStats, quotasData]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -150,7 +176,7 @@ export function QuotaManagementPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
+          onClick={handleRefresh}
           disabled={isLoading}
         >
           <RefreshCw
@@ -219,6 +245,9 @@ export function QuotaManagementPage() {
               totalElements: quotasData?.totalElements ?? 0,
             }}
             onPaginationChange={handlePaginationChange}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
           />
         </CardContent>
       </Card>

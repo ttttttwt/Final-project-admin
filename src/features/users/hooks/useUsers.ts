@@ -5,7 +5,7 @@ import type { UserSearchParams, CreateUserInput, UpdateUserInput } from "../type
 export const useUsers = (params: UserSearchParams) => {
   return useQuery({
     queryKey: ["users", params],
-    queryFn: () => usersApi.getUsers(params.page, params.size, params.search, params.role),
+    queryFn: () => usersApi.getUsers(params.page, params.size, params.search, params.role, params.planType),
   });
 };
 

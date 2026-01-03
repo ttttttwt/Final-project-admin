@@ -386,7 +386,7 @@ const UserDetailPage: React.FC = () => {
                                 </div>
 
                                 {/* Feature Breakdown */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     {/* Role Play */}
                                     <div className="p-4 border rounded-lg">
                                         <div className="flex items-center gap-2 mb-2">
@@ -434,6 +434,23 @@ const UserDetailPage: React.FC = () => {
                                         <Progress
                                             value={((user.aiQuota.grammarExercisesUsed ?? 0) /
                                                 (user.aiQuota.grammarExercisesLimit ?? 300)) * 100}
+                                            className="h-1 mt-2"
+                                        />
+                                    </div>
+
+                                    {/* Custom Materials */}
+                                    <div className="p-4 border rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <BookOpen className="h-4 w-4 text-orange-500" />
+                                            <span className="font-medium text-sm">Custom Materials</span>
+                                        </div>
+                                        <div className="text-2xl font-bold">
+                                            {user.aiQuota.customMaterialsUsed ?? 0}/{user.aiQuota.customMaterialsLimit ?? 10}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">materials</p>
+                                        <Progress
+                                            value={((user.aiQuota.customMaterialsUsed ?? 0) /
+                                                (user.aiQuota.customMaterialsLimit ?? 10)) * 100}
                                             className="h-1 mt-2"
                                         />
                                     </div>

@@ -87,4 +87,6 @@ export interface JobQueryParams {
   stuckOnly?: boolean;
   page?: number;
   size?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }

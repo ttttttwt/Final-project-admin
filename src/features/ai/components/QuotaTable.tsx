@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { MoreHorizontal, RefreshCw, Infinity, Edit, Search, Calendar } from "lucide-react";
+import { MoreHorizontal, RefreshCw, Infinity, Edit, Search, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -58,7 +58,15 @@ interface QuotaTableProps {
     totalElements: number;
   };
   onPaginationChange: (params: Partial<QuotaSearchParams>) => void;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  onSortChange?: (sortBy: string, sortDir: "asc" | "desc") => void;
 }
+
+/**
+ * Sortable column type
+ */
+type SortableColumn = "userEmail" | "planType" | "roleplaySessionsUsed" | "grammarExercisesUsed" | "flashcardDecksUsed" | "customMaterialsUsed" | "daysUntilReset";
 
 /**
  * Calculate usage percentage
@@ -157,6 +165,9 @@ export function QuotaTable({
   onPlanTypeFilterChange,
   pagination,
   onPaginationChange,
+  sortBy,
+  sortDir = "asc",
+  onSortChange,
 }: QuotaTableProps) {
   const [searchInput, setSearchInput] = useState(searchValue);
 
@@ -168,6 +179,40 @@ export function QuotaTable({
     e.preventDefault();
     onSearch(searchInput);
   };
+
+  const handleSort = (column: SortableColumn) => {
+    if (!onSortChange) return;
+    
+    if (sortBy === column) {
+      // Toggle direction if same column
+      onSortChange(column, sortDir === "asc" ? "desc" : "asc");
+    } else {
+      // Default to ascending for new column
+      onSortChange(column, "asc");
+    }
+  };
+
+  const renderSortIcon = (column: SortableColumn) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDir === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
+  };
+
+  const SortableHeader = ({ column, children }: { column: SortableColumn; children: React.ReactNode }) => (
+    <Button
+      variant="ghost"
+      onClick={() => handleSort(column)}
+      className="h-8 px-2 -ml-2 hover:bg-transparent"
+    >
+      {children}
+      {renderSortIcon(column)}
+    </Button>
+  );
 
   return (
     <div className="space-y-4">
@@ -206,13 +251,27 @@ export function QuotaTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">User</TableHead>
-              <TableHead className="w-[100px]">Plan</TableHead>
-              <TableHead>Role-Play</TableHead>
-              <TableHead>Grammar</TableHead>
-              <TableHead>Flashcards</TableHead>
-              <TableHead>Materials</TableHead>
-              <TableHead className="w-[120px]">Reset</TableHead>
+              <TableHead className="w-[200px]">
+                <SortableHeader column="userEmail">User</SortableHeader>
+              </TableHead>
+              <TableHead className="w-[100px]">
+                <SortableHeader column="planType">Plan</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="roleplaySessionsUsed">Role-Play</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="grammarExercisesUsed">Grammar</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="flashcardDecksUsed">Flashcards</SortableHeader>
+              </TableHead>
+              <TableHead>
+                <SortableHeader column="customMaterialsUsed">Materials</SortableHeader>
+              </TableHead>
+              <TableHead className="w-[120px]">
+                <SortableHeader column="daysUntilReset">Reset</SortableHeader>
+              </TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>

@@ -8,6 +8,7 @@ import type {
   UserAIQuota,
   QuotaSearchParams,
   QuotaListResponse,
+  QuotaSummaryStats,
   UpdateQuotaInput,
   BulkUpdateQuotaInput,
   CostAnalyticsSummary,
@@ -34,6 +35,14 @@ export const quotaApi = {
     const response = await api.get<QuotaListResponse>("/admin/ai-quotas", {
       params,
     });
+    return response.data;
+  },
+
+  /**
+   * Get quota summary statistics
+   */
+  getSummaryStats: async (): Promise<QuotaSummaryStats> => {
+    const response = await api.get<QuotaSummaryStats>("/admin/ai-quotas/summary-stats");
     return response.data;
   },
 

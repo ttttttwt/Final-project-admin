@@ -151,6 +151,17 @@ export interface QuotaListResponse {
 }
 
 /**
+ * Quota summary statistics
+ */
+export interface QuotaSummaryStats {
+  totalUsers: number;
+  proUsers: number;
+  freeUsers: number;
+  quotaExceeded: number;
+  unlimitedUsers: number;
+}
+
+/**
  * Update quota input
  */
 export interface UpdateQuotaInput {

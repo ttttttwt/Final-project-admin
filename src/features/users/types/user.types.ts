@@ -1,5 +1,6 @@
 export type UserRole = "ADMIN" | "CONTENT_MANAGER" | "LEARNER";
 export type UserStatus = "ACTIVE" | "INACTIVE";
+export type PlanTypeFilter = "FREE" | "PRO";
 
 export interface UserSearchParams {
   page: number;
@@ -7,6 +8,7 @@ export interface UserSearchParams {
   search?: string;
   role?: UserRole;
   status?: UserStatus;
+  planType?: PlanTypeFilter;
   sort?: string;
 }
 
@@ -116,6 +118,10 @@ export interface AiQuotaSummary {
   /** Grammar exercises generated used/limit for current month */
   grammarExercisesUsed?: number;
   grammarExercisesLimit?: number;
+  
+  /** Custom materials created used/limit for current month */
+  customMaterialsUsed?: number;
+  customMaterialsLimit?: number;
   
   /** Total AI requests used/limit for current month */
   totalRequestsUsed?: number;

@@ -22,6 +22,7 @@ export const AI_KEYS = {
   // Quotas
   quotas: (params: QuotaSearchParams) => ["ai", "quotas", params] as const,
   quota: (userId: string) => ["ai", "quotas", userId] as const,
+  quotaSummaryStats: ["ai", "quotas", "summary-stats"] as const,
   
   // Costs
   costAnalytics: (params: CostAnalyticsParams) => ["ai", "costs", "analytics", params] as const,
@@ -53,6 +54,17 @@ export const useQuotas = (params: QuotaSearchParams) => {
   return useQuery({
     queryKey: AI_KEYS.quotas(params),
     queryFn: () => quotaApi.getQuotas(params),
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};
+
+/**
+ * Hook to fetch quota summary statistics
+ */
+export const useQuotaSummaryStats = () => {
+  return useQuery({
+    queryKey: AI_KEYS.quotaSummaryStats,
+    queryFn: () => quotaApi.getSummaryStats(),
     staleTime: 30 * 1000, // 30 seconds
   });
 };

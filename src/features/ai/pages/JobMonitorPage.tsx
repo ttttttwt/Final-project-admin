@@ -34,23 +34,32 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { RefreshCw, Play, RotateCcw, Trash2, AlertTriangle, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
+import { RefreshCw, Play, RotateCcw, Trash2, AlertTriangle, CheckCircle2, XCircle, Clock, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AINav } from '../components/AINav';
 import { useJobs, useJobStats, useRetryJob, useResetRetryCount, useDeleteJob } from '../hooks/useCustomMaterialAdmin';
 import type { AdminJob, JobStatus, JobQueryParams } from '../types/customMaterialAdmin';
+
+type SortableColumn = 'materialTitle' | 'userEmail' | 'status' | 'progress' | 'retryCount' | 'startedAt';
 
 /**
  * Admin page for monitoring custom material processing jobs.
  * 
  * Features:
  * - Stats cards (Total, Completed, Failed, Stuck)
- * - Job list table with filtering
+ * - Job list table with filtering and sorting
  * - Retry, Reset Retries, and Delete actions
+ * - Default sort by most recent date
  * 
  * @since Sprint 6
  */
 export function JobMonitorPage() {
-    const [params, setParams] = useState<JobQueryParams>({ page: 0, size: 20 });
+    // Default sort by startedAt desc (most recent first)
+    const [params, setParams] = useState<JobQueryParams>({ 
+        page: 0, 
+        size: 20,
+        sortBy: 'startedAt',
+        sortDir: 'desc'
+    });
 
     const { data: jobsData, isLoading, refetch } = useJobs(params);
     const { data: stats } = useJobStats();
@@ -63,8 +72,38 @@ export function JobMonitorPage() {
             ...prev,
             status: value === 'all' ? undefined : value as JobStatus,
             stuckOnly: value === 'stuck' ? true : undefined,
+            page: 0, // Reset to first page on filter change
         }));
     };
+
+    const handleSort = (column: SortableColumn) => {
+        setParams(prev => ({
+            ...prev,
+            sortBy: column,
+            sortDir: prev.sortBy === column && prev.sortDir === 'desc' ? 'asc' : 'desc',
+            page: 0,
+        }));
+    };
+
+    const renderSortIcon = (column: SortableColumn) => {
+        if (params.sortBy !== column) {
+            return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+        }
+        return params.sortDir === 'asc' 
+            ? <ArrowUp className="ml-2 h-4 w-4" />
+            : <ArrowDown className="ml-2 h-4 w-4" />;
+    };
+
+    const SortableHeader = ({ column, children }: { column: SortableColumn; children: React.ReactNode }) => (
+        <Button
+            variant="ghost"
+            onClick={() => handleSort(column)}
+            className="h-8 px-2 -ml-2 hover:bg-transparent font-medium"
+        >
+            {children}
+            {renderSortIcon(column)}
+        </Button>
+    );
 
     const getStatusBadge = (status: string, isStuck?: boolean) => {
         if (isStuck) {
@@ -165,12 +204,24 @@ export function JobMonitorPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Material</TableHead>
-                                <TableHead>User</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Progress</TableHead>
-                                <TableHead>Retries</TableHead>
-                                <TableHead>Started</TableHead>
+                                <TableHead>
+                                    <SortableHeader column="materialTitle">Material</SortableHeader>
+                                </TableHead>
+                                <TableHead>
+                                    <SortableHeader column="userEmail">User</SortableHeader>
+                                </TableHead>
+                                <TableHead>
+                                    <SortableHeader column="status">Status</SortableHeader>
+                                </TableHead>
+                                <TableHead>
+                                    <SortableHeader column="progress">Progress</SortableHeader>
+                                </TableHead>
+                                <TableHead>
+                                    <SortableHeader column="retryCount">Retries</SortableHeader>
+                                </TableHead>
+                                <TableHead>
+                                    <SortableHeader column="startedAt">Started</SortableHeader>
+                                </TableHead>
                                 <TableHead>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
