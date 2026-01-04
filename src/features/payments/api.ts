@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { AdminPaymentDTO, PagedPayments, RefundRequest } from './types';
+import type { AdminPaymentDTO, PagedPayments, RefundRequest, PaymentSummary } from './types';
 
 const BASE_URL = '/admin/payments';
 
@@ -10,6 +10,11 @@ export const paymentApi = {
     if (status && status !== 'ALL') params.append('status', status);
     
     const response = await api.get<PagedPayments>(`${BASE_URL}?${params}`);
+    return response.data;
+  },
+
+  getPaymentSummary: async (): Promise<PaymentSummary> => {
+    const response = await api.get<PaymentSummary>(`${BASE_URL}/summary`);
     return response.data;
   },
 

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore();
+  const location = useLocation();
   const isAdmin = user?.role === "ADMIN";
 
   const navItems = [
@@ -77,6 +78,8 @@ export default function Sidebar() {
       href: "/monitoring/health",
       icon: Activity,
       show: isAdmin,
+      isActiveMatch: (pathname: string) =>
+        pathname.startsWith("/monitoring") && pathname !== "/monitoring/users",
     },
     {
       title: "Notifications",
@@ -111,14 +114,17 @@ export default function Sidebar() {
                 <NavLink
                   key={item.href}
                   to={item.href}
-                  className={({ isActive }) =>
-                    cn(
+                  className={({ isActive }) => {
+                    const active = item.isActiveMatch
+                      ? item.isActiveMatch(location.pathname)
+                      : isActive;
+                    return cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isActive
+                      active
                         ? "bg-muted text-primary"
                         : "text-muted-foreground"
-                    )
-                  }
+                    );
+                  }}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.title}

@@ -29,10 +29,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, RefreshCcw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2, Search, RefreshCcw, AlertCircle, ChevronLeft, ChevronRight, DollarSign, TrendingUp, CreditCard, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AxiosError } from 'axios';
+import { analyticsApi } from '@/features/analytics/api';
 
 export default function PaymentManagementPage() {
   const [page, setPage] = useState(0);
@@ -48,6 +51,12 @@ export default function PaymentManagementPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['payments', page, search, statusFilter],
     queryFn: () => paymentApi.getPayments(page, 10, search, statusFilter),
+  });
+
+  // Fetch analytics for revenue summary
+  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
+    queryKey: ['analyticsOverview'],
+    queryFn: analyticsApi.getOverview,
   });
 
   const refundMutation = useMutation({
@@ -94,6 +103,70 @@ export default function PaymentManagementPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
       </div>
+
+      {/* Summary Cards */}
+      {isLoadingAnalytics ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-[80px]" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-500">
+                ${(analyticsData?.totalRevenue || 0).toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">All time revenue</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${(analyticsData?.revenueThisMonth || 0).toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">Revenue this month</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Transactions</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data?.totalElements?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Total payment records</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pro Users</CardTitle>
+              <RotateCcw className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData?.proUsers?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Active subscribers</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
@@ -237,7 +310,7 @@ export default function PaymentManagementPage() {
               Are you sure you want to refund this payment? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedPayment && (
             <div className="py-4 space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -258,8 +331,8 @@ export default function PaymentManagementPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Reason</label>
-                <Select 
-                  value={refundReason} 
+                <Select
+                  value={refundReason}
                   onValueChange={(val) => setRefundReason(val as RefundRequest['reason'])}
                 >
                   <SelectTrigger>
@@ -279,8 +352,8 @@ export default function PaymentManagementPage() {
             <Button variant="outline" onClick={() => setIsRefundDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleRefund}
               disabled={refundMutation.isPending}
             >

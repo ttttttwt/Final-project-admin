@@ -7,7 +7,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
-import { Plus, Search, X, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Search, X, Trash2, Users, UserCheck, Crown, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { UserTable } from "../components/UserTable";
 import { useUsers } from "../hooks/useUsers";
@@ -28,6 +30,7 @@ import type {
   PlanTypeFilter,
   UserSearchParams,
 } from "../types/user.types";
+import { analyticsApi } from "@/features/analytics/api";
 
 /**
  * UserListPage - Main page for user management
@@ -45,6 +48,12 @@ export function UserListPage() {
 
   // Fetch users
   const { data, isLoading, error } = useUsers(params);
+
+  // Fetch analytics overview for stats cards
+  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
+    queryKey: ["analyticsOverview"],
+    queryFn: analyticsApi.getOverview,
+  });
 
   // Debounced search handler
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -143,6 +152,66 @@ export function UserListPage() {
           </Button>
         </div>
       </div>
+
+      {/* Stats Cards */}
+      {isLoadingAnalytics ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-[60px]" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData?.totalUsers?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Registered users</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData?.activeUsers?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Currently active</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pro Users</CardTitle>
+              <Crown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData?.proUsers?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Premium subscribers</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData?.newUsersThisMonth?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">New registrations</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters Card */}
       <Card>

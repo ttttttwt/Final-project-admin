@@ -3,7 +3,7 @@ import { dashboardApi } from "../api/dashboardApi";
 import { analyticsApi } from "../api/analyticsApi";
 import StatsCard from "../components/StatsCard";
 import RecentActivity from "../components/RecentActivity";
-import OverviewChart from "../components/OverviewChart";
+import TotalRevenueChart from "../components/TotalRevenueChart";
 import UserGrowthChart from "../components/UserGrowthChart";
 import RevenueChart from "../components/RevenueChart";
 import AIUsageChart from "../components/AIUsageChart";
@@ -88,7 +88,7 @@ export default function DashboardPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatsCard
@@ -118,7 +118,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <OverviewChart coursesByLevel={stats?.coursesByLevel || {}} />
+            <TotalRevenueChart data={analytics?.monthlyStats || []} />
             <RecentActivity activities={stats?.recentActivities || []} />
           </div>
         </TabsContent>
@@ -130,13 +130,13 @@ export default function DashboardPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <AIUsageChart data={analytics?.aiUsage?.dailyUsage || []} />
-            <UserDistributionChart 
-              data={analytics?.userDistribution || { 
-                freeUsers: 0, 
-                monthlyProUsers: 0, 
-                yearlyProUsers: 0, 
-                usersByLevel: {} 
-              }} 
+            <UserDistributionChart
+              data={analytics?.userDistribution || {
+                freeUsers: 0,
+                monthlyProUsers: 0,
+                yearlyProUsers: 0,
+                usersByLevel: {}
+              }}
             />
           </div>
         </TabsContent>

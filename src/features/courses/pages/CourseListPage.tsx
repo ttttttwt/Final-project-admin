@@ -7,7 +7,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
-import { Plus, Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Search, X, BookOpen, Globe, FileEdit, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { CourseTable } from "../components/CourseTable";
 import { useCourses } from "../hooks/useCourses";
 import type { CEFRLevel, CourseSearchParams } from "../types/course.types";
+import { dashboardApi } from "@/features/dashboard/api/dashboardApi";
 
 /**
  * CourseListPage - Main page for course management
@@ -40,6 +43,12 @@ export function CourseListPage() {
 
   // Fetch courses
   const { data, isLoading, error } = useCourses(params);
+
+  // Fetch dashboard stats for course statistics
+  const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: dashboardApi.getStats,
+  });
 
   // Debounced search handler
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -125,6 +134,66 @@ export function CourseListPage() {
         </Button>
       </div>
 
+      {/* Stats Cards */}
+      {isLoadingStats ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-[60px]" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.totalCourses?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">All courses</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Published</CardTitle>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.publishedCourses?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Available to learners</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Draft</CardTitle>
+              <FileEdit className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{((dashboardStats?.totalCourses || 0) - (dashboardStats?.publishedCourses || 0)).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Work in progress</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Lessons</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.totalLessons?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Content units</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Filters Card */}
       <Card>
         <CardHeader>
@@ -179,8 +248,8 @@ export function CourseListPage() {
                 params.isPublished === undefined
                   ? "all"
                   : params.isPublished
-                  ? "published"
-                  : "draft"
+                    ? "published"
+                    : "draft"
               }
               onValueChange={handlePublishStatusChange}
             >

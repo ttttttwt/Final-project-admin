@@ -24,3 +24,12 @@ export interface PagedPayments {
 export interface RefundRequest {
   reason?: 'requested_by_customer' | 'duplicate' | 'fraudulent';
 }
+
+export interface PaymentSummary {
+  totalRevenue: number;
+  revenueThisMonth: number;
+  totalTransactions: number;
+  transactionsThisMonth: number;
+  refundedAmount: number;
+  refundCount: number;
+}

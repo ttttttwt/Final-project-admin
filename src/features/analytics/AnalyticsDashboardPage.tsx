@@ -38,13 +38,13 @@ import {
     Legend,
 } from 'recharts';
 
-// Chart colors
+// Chart colors - using CEFR level codes
 const LEVEL_COLORS: Record<string, string> = {
-    BEGINNER: '#22c55e',
-    ELEMENTARY: '#84cc16',
-    INTERMEDIATE: '#eab308',
-    UPPER_INTERMEDIATE: '#f97316',
-    ADVANCED: '#ef4444',
+    A1: '#22c55e',  // Beginner
+    A2: '#84cc16',  // Elementary
+    B1: '#eab308',  // Intermediate
+    B2: '#f97316',  // Upper Intermediate
+    C1: '#ef4444',  // Advanced
 };
 
 // Format currency
@@ -128,7 +128,7 @@ export function AnalyticsDashboardPage() {
             { name: 'Role Play', value: data.aiUsage.roleplayRequests },
             { name: 'Grammar', value: data.aiUsage.grammarRequests },
             { name: 'Flashcard', value: data.aiUsage.flashcardRequests },
-            { name: 'Translation', value: data.aiUsage.translationRequests },
+            { name: 'Custom Material', value: data.aiUsage.customMaterialRequests },
         ]
         : [];
 
@@ -323,6 +323,15 @@ export function AnalyticsDashboardPage() {
                 <CardContent>
                     {isLoading ? (
                         <Skeleton className="h-[200px]" />
+                    ) : levelData.length === 0 || levelData.every(d => d.value === 0) ? (
+                        <div className="flex h-[200px] items-center justify-center text-muted-foreground">
+                            <div className="text-center">
+                                <p className="text-sm">Chưa có dữ liệu trình độ CEFR</p>
+                                <p className="text-xs mt-1">
+                                    Người dùng cần hoàn thành bài kiểm tra đánh giá để xác định trình độ
+                                </p>
+                            </div>
+                        </div>
                     ) : (
                         <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={levelData}>

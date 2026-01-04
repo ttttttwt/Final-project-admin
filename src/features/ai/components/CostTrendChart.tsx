@@ -174,6 +174,15 @@ export function CostTrendChart({
                   fill="#dc2626"
                   fillOpacity={0.6}
                 />
+                <Area
+                  type="monotone"
+                  dataKey="customMaterialCost"
+                  name="Custom Material"
+                  stackId="1"
+                  stroke="#f97316"
+                  fill="#f97316"
+                  fillOpacity={0.6}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>

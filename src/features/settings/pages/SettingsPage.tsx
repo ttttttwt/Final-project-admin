@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Moon, Sun, Monitor, Palette, Bell, Shield, Globe } from "lucide-react";
+import { Moon, Sun, Monitor, Palette, Shield, Globe } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
@@ -62,9 +62,6 @@ export default function SettingsPage() {
   const { theme, setTheme } = useThemeStore();
 
   // Local state for settings (these would be persisted to backend/localStorage in a real app)
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [marketingEmails, setMarketingEmails] = useState(false);
   const [language, setLanguage] = useState("en");
   const [autoSave, setAutoSave] = useState(true);
 
@@ -73,14 +70,6 @@ export default function SettingsPage() {
     toast({
       title: "Theme Updated",
       description: `Theme changed to ${newTheme}`,
-    });
-  };
-
-  const handleSaveNotifications = () => {
-    // In a real app, this would save to backend
-    toast({
-      title: "Settings Saved",
-      description: "Your notification preferences have been updated",
     });
   };
 
@@ -165,74 +154,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Notification Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notifications
-            </CardTitle>
-            <CardDescription>
-              Configure how you receive notifications
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-notifications">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive email notifications for important updates
-                </p>
-              </div>
-              <Switch
-                id="email-notifications"
-                checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
-                aria-label="Toggle email notifications"
-              />
-            </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="push-notifications">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive push notifications in your browser
-                </p>
-              </div>
-              <Switch
-                id="push-notifications"
-                checked={pushNotifications}
-                onCheckedChange={setPushNotifications}
-                aria-label="Toggle push notifications"
-              />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="marketing-emails">Marketing Emails</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive emails about new features and tips
-                </p>
-              </div>
-              <Switch
-                id="marketing-emails"
-                checked={marketingEmails}
-                onCheckedChange={setMarketingEmails}
-                aria-label="Toggle marketing emails"
-              />
-            </div>
-
-            <div className="pt-4">
-              <Button onClick={handleSaveNotifications}>
-                Save Notification Preferences
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* General Settings */}
         <Card>

@@ -40,7 +40,7 @@ export interface AIUsageStats {
   roleplayRequests: number;
   grammarRequests: number;
   flashcardRequests: number;
-  translationRequests: number;
+  customMaterialRequests: number;
   successRate: number;
   averageResponseTimeMs: number;
   dailyUsage: DailyAIUsage[];

@@ -207,6 +207,7 @@ export interface DailyCostData {
   rolePlayCost: number;
   grammarCost: number;
   flashcardCost: number;
+  customMaterialCost: number;
 }
 
 /**
