@@ -222,7 +222,7 @@ export function ReadingLessonEditor({
           <TabsTrigger value="basic" className="relative">
             Basic Info
             {basicErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {basicErrors}
               </Badge>
             )}
@@ -231,7 +231,7 @@ export function ReadingLessonEditor({
             <BookOpen className="h-4 w-4 mr-2" />
             Passages ({passages.length})
             {passageErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {passageErrors}
               </Badge>
             )}
@@ -240,7 +240,7 @@ export function ReadingLessonEditor({
             <HelpCircle className="h-4 w-4 mr-2" />
             Questions ({questions.length})
             {questionErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {questionErrors}
               </Badge>
             )}

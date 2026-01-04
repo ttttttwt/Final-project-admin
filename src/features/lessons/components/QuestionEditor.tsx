@@ -281,7 +281,7 @@ export function QuestionEditor({
                       className={cn(
                         "flex-1",
                         question.correctAnswer === optionIndex &&
-                          "border-green-500 bg-green-50"
+                        "border-green-500 bg-green-50 dark:bg-green-950 dark:border-green-600"
                       )}
                     />
                     {/* Remove option */}

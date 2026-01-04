@@ -29,7 +29,6 @@ import { ReadingLessonEditor } from "../components/ReadingLessonEditor";
 import { ListeningLessonEditor } from "../components/ListeningLessonEditor";
 import { QuizLessonEditor } from "../components/QuizLessonEditor";
 import { SpeakingLessonEditor } from "../components/SpeakingLessonEditor";
-import { AudioUpload } from "../components/AudioUpload";
 import { useLesson, useUpdateLesson } from "../hooks/useLessons";
 import api from "@/lib/api";
 import type {
@@ -332,28 +331,52 @@ export default function LessonEditPage() {
 
   // Handle Listening lesson form submission
   const handleListeningLessonSubmit = useCallback(
-    async (data: ListeningLessonFormData) => {
+    async (data: ListeningLessonFormData, pendingAudioFile?: File) => {
       if (!lesson) return;
 
-      const content = {
-        audioUrl: data.audioUrl,
-        duration: data.duration,
-        transcript: data.transcript,
-        showTranscript: data.showTranscript,
-        questions: data.questions,
-        vocabulary: data.vocabulary || [],
-      };
-
-      const durationMinutes =
-        Math.ceil(data.duration / 60) + Math.ceil(data.questions.length * 0.5);
-
-      const updateData: UpdateLessonInput = {
-        title: data.title,
-        content: JSON.stringify(content),
-        durationMinutes: durationMinutes,
-      };
-
       try {
+        // Step 1: If there's a pending audio file, upload it first to get real URL
+        let audioUrl = data.audioUrl;
+        
+        if (pendingAudioFile) {
+          try {
+            const { lessonsApi } = await import("../api/lessonsApi");
+            const uploadResult = await lessonsApi.uploadAudioFile(pendingAudioFile);
+            // Use the download URL from the upload response
+            audioUrl = uploadResult.url;
+          } catch (uploadError) {
+            console.error("Error uploading audio:", uploadError);
+            toast({
+              variant: "destructive",
+              title: "Upload Failed",
+              description: "Failed to upload audio file. Please try again.",
+            });
+            return; // Don't update lesson if upload fails
+          }
+        } else if (audioUrl?.startsWith("blob:")) {
+          // Keep existing audio URL if we have a blob (shouldn't happen in edit)
+          const existingContent = getParsedContent() as ListeningLessonContent | null;
+          audioUrl = existingContent?.audioUrl || "";
+        }
+
+        const content = {
+          audioUrl: audioUrl || "",
+          duration: data.duration,
+          transcript: data.transcript,
+          showTranscript: data.showTranscript,
+          questions: data.questions,
+          vocabulary: data.vocabulary || [],
+        };
+
+        const durationMinutes =
+          Math.ceil(data.duration / 60) + Math.ceil(data.questions.length * 0.5);
+
+        const updateData: UpdateLessonInput = {
+          title: data.title,
+          content: JSON.stringify(content),
+          durationMinutes: durationMinutes,
+        };
+
         await updateLessonMutation.mutateAsync({
           id: lessonId,
           data: updateData,
@@ -378,7 +401,7 @@ export default function LessonEditPage() {
         });
       }
     },
-    [lesson, lessonId, courseId, updateLessonMutation, navigate, toast]
+    [lesson, lessonId, courseId, updateLessonMutation, navigate, toast, getParsedContent]
   );
 
   // Handle Quiz lesson form submission
@@ -566,36 +589,6 @@ export default function LessonEditPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-
-      {/* Audio Upload for LISTENING lessons */}
-      {lesson.lessonType === "LISTENING" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lesson Audio</CardTitle>
-            <CardDescription>
-              Upload an audio file for this listening lesson
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AudioUpload
-              lessonId={lessonId}
-              currentAudioUrl={lesson.audioUrl}
-              onUploadSuccess={() => {
-                toast({
-                  title: "Success",
-                  description: "Audio file uploaded successfully.",
-                });
-              }}
-              onDeleteSuccess={() => {
-                toast({
-                  title: "Success",
-                  description: "Audio file removed successfully.",
-                });
-              }}
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Render appropriate editor based on lesson type */}
       {lesson.lessonType === "READING" && (

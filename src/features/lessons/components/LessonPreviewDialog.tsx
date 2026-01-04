@@ -40,6 +40,20 @@ import type {
   SpeakingLessonContent,
 } from "../types/lesson.types";
 
+/** Convert relative URL to full URL */
+const getFullUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  // If already a full URL, return as-is
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  // Convert relative URL to full URL using API base URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8088/api/v1";
+  // Remove /api/v1 suffix from base URL if the relative URL already has it
+  const serverBaseUrl = baseUrl.replace(/\/api\/v1\/?$/, "");
+  return `${serverBaseUrl}${url}`;
+};
+
 interface LessonPreviewDialogProps {
   /** Whether the dialog is open */
   open: boolean;
@@ -261,7 +275,7 @@ function ListeningLessonPreview({
         <CardContent className="py-3 space-y-3">
           {content.audioUrl ? (
             <>
-              <audio controls className="w-full" src={content.audioUrl}>
+              <audio controls className="w-full" src={getFullUrl(content.audioUrl)}>
                 Your browser does not support the audio element.
               </audio>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">

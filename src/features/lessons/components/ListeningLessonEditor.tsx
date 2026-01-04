@@ -20,6 +20,7 @@ import {
   Volume2,
   FileAudio,
   AlertCircle,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,11 +51,25 @@ import {
   defaultListeningVocabularyItem,
 } from "../schemas/listeningLesson.schema";
 
+/** Convert relative URL to full URL for audio playback */
+const getFullAudioUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  // If already a full URL or blob URL, return as-is
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:")) {
+    return url;
+  }
+  // Convert relative URL to full URL using API base URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8088/api/v1";
+  // Remove /api/v1 suffix from base URL if the relative URL already has it
+  const serverBaseUrl = baseUrl.replace(/\/api\/v1\/?$/, "");
+  return `${serverBaseUrl}${url}`;
+};
+
 interface ListeningLessonEditorProps {
   /** Initial data for editing (optional) */
   initialData?: Partial<ListeningLessonFormData>;
-  /** Callback when form is submitted */
-  onSubmit: (data: ListeningLessonFormData) => void;
+  /** Callback when form is submitted, with optional pending audio file */
+  onSubmit: (data: ListeningLessonFormData, pendingAudioFile?: File) => void;
   /** Callback when back button is clicked */
   onBack: () => void;
   /** Whether form is submitting */
@@ -85,7 +100,10 @@ export function ListeningLessonEditor({
   const [activeTab, setActiveTab] = useState("basic");
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form setup with Zod validation
   const {
@@ -144,7 +162,8 @@ export function ListeningLessonEditor({
   const handlePlayPause = useCallback(() => {
     if (!audioRef.current) {
       if (audioUrl) {
-        audioRef.current = new Audio(audioUrl);
+        // Use full URL for playback (handle relative URLs from server)
+        audioRef.current = new Audio(getFullAudioUrl(audioUrl));
         audioRef.current.addEventListener("ended", () => setIsPlaying(false));
         audioRef.current.addEventListener("error", () => {
           setAudioError("Failed to play audio");
@@ -178,6 +197,58 @@ export function ListeningLessonEditor({
     },
     [setValue]
   );
+
+  // Handle file selection for audio upload
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      const allowedTypes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/mp4", "audio/x-m4a"];
+      if (!allowedTypes.includes(file.type)) {
+        setAudioError("Invalid file type. Please select MP3, WAV, OGG, or M4A file.");
+        return;
+      }
+
+      // Validate file size (50MB max)
+      if (file.size > 50 * 1024 * 1024) {
+        setAudioError("File too large. Maximum size is 50MB.");
+        return;
+      }
+
+      setPendingAudioFile(file);
+      setAudioError(null);
+
+      // Create local URL for preview and auto-detect duration
+      const localUrl = URL.createObjectURL(file);
+      setValue("audioUrl", localUrl, { shouldValidate: true });
+
+      const audio = new Audio(localUrl);
+      audio.addEventListener("loadedmetadata", () => {
+        setValue("duration", Math.round(audio.duration), { shouldValidate: true });
+      });
+    },
+    [setValue]
+  );
+
+  const handleRemovePendingFile = useCallback(() => {
+    setPendingAudioFile(null);
+    setValue("audioUrl", "", { shouldValidate: true });
+    setValue("duration", 0, { shouldValidate: true });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [setValue]);
+
+  // Handle seek in audio timeline
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+  }, []);
 
   // === Question Handlers ===
   const handleQuestionChange = useCallback(
@@ -243,8 +314,13 @@ export function ListeningLessonEditor({
   const questionErrors = errors.questions?.length || 0;
   const basicErrors = (errors.title ? 1 : 0) + (errors.description ? 1 : 0);
 
+  // Wrapper to pass pending file with form data
+  const handleFormSubmit = handleSubmit((data) => {
+    onSubmit(data, pendingAudioFile || undefined);
+  });
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -284,7 +360,7 @@ export function ListeningLessonEditor({
           <TabsTrigger value="basic" className="relative">
             Basic Info
             {basicErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {basicErrors}
               </Badge>
             )}
@@ -293,7 +369,7 @@ export function ListeningLessonEditor({
             <Headphones className="h-4 w-4 mr-2" />
             Audio
             {audioErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {audioErrors}
               </Badge>
             )}
@@ -302,7 +378,7 @@ export function ListeningLessonEditor({
             <HelpCircle className="h-4 w-4 mr-2" />
             Questions ({questions.length})
             {questionErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {questionErrors}
               </Badge>
             )}
@@ -423,16 +499,91 @@ export function ListeningLessonEditor({
                 </p>
               </div>
 
-              {/* File Upload - Placeholder for future implementation */}
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Drag and drop an audio file here, or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  (File upload coming soon - use URL for now)
-                </p>
-              </div>
+              {/* File Upload Section */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="audio-file-input"
+              />
+              {pendingAudioFile ? (
+                <div className="border-2 border-dashed border-green-500 rounded-lg p-4 bg-green-50 dark:bg-green-950">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileAudio className="h-8 w-8 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium">{pendingAudioFile.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(pendingAudioFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemovePendingFile}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {/* Audio Player with Timeline */}
+                  {audioUrl && (
+                    <div className="mt-3 p-3 bg-muted rounded-lg">
+                      <audio
+                        ref={audioRef}
+                        src={audioUrl}
+                        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                        onEnded={() => setIsPlaying(false)}
+                        onLoadedMetadata={(e) => {
+                          setValue("duration", Math.round(e.currentTarget.duration), { shouldValidate: true });
+                        }}
+                      />
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={handlePlayPause}
+                        >
+                          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </Button>
+                        <div className="flex-1">
+                          <input
+                            type="range"
+                            min={0}
+                            max={duration || 0}
+                            value={currentTime}
+                            onChange={handleSeek}
+                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground min-w-[70px] text-right">
+                          {formatDuration(Math.floor(currentTime))} / {formatDuration(duration || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                    ✓ File selected. Duration auto-detected. Ready to save.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium">Click to browse or drag and drop</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    MP3, WAV, OGG, M4A • Max 50MB
+                  </p>
+                </div>
+              )}
 
               {/* Duration */}
               <div className="space-y-2">
@@ -542,7 +693,7 @@ export function ListeningLessonEditor({
                   key={index}
                   question={question}
                   index={index + 1}
-                  isOnly={questions.length === 1}
+                  isOnly={false}
                   audioDuration={duration}
                   onChange={(q) => handleQuestionChange(index, q)}
                   onDelete={() => handleDeleteQuestion(index)}

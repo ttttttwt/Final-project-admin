@@ -269,7 +269,7 @@ export function SpeakingLessonEditor({
           <TabsTrigger value="basic" className="relative">
             Basic Info
             {basicErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {basicErrors}
               </Badge>
             )}
@@ -278,7 +278,7 @@ export function SpeakingLessonEditor({
             <Mic className="h-4 w-4 mr-2" />
             Prompts ({prompts.length})
             {promptErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {promptErrors}
               </Badge>
             )}
@@ -287,7 +287,7 @@ export function SpeakingLessonEditor({
             <Settings className="h-4 w-4 mr-2" />
             Role-Play
             {settingsErrors > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-2 h-5 min-w-5 p-0 text-xs flex items-center justify-center">
                 {settingsErrors}
               </Badge>
             )}

@@ -11,6 +11,17 @@ import type {
 } from "../types/lesson.types";
 import type { Section } from "@/features/courses/types/course.types";
 
+/** Response from file upload endpoint */
+export interface FileUploadResponse {
+  id: string;
+  originalFilename: string;
+  mimeType: string;
+  size: number;
+  category: string;
+  url: string;
+  uploadedAt: string;
+}
+
 export const lessonsApi = {
   /**
    * Get lesson by ID
@@ -132,6 +143,25 @@ export const lessonsApi = {
    */
   deleteAudio: async (id: number): Promise<Lesson> => {
     const response = await api.delete<Lesson>(`/lessons/${id}/audio`);
+    return response.data;
+  },
+
+  /**
+   * Upload audio file independently (before creating lesson)
+   * Returns the file URL that can be used in lesson content
+   * @param file Audio file (MP3, WAV, OGG, M4A, max 50MB)
+   * @returns FileUploadResponse with url field containing the downloadable URL
+   */
+  uploadAudioFile: async (file: File): Promise<FileUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("category", "LESSON_AUDIO");
+
+    const response = await api.post<FileUploadResponse>("/files/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 };

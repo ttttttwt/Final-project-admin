@@ -262,21 +262,44 @@ export default function LessonCreatePage() {
 
   // Handle Listening lesson form submission
   const handleListeningLessonSubmit = useCallback(
-    async (data: ListeningLessonFormData) => {
+    async (data: ListeningLessonFormData, pendingAudioFile?: File) => {
       if (!sectionId) return;
 
-      // Build the lesson content from form data
-      const content = {
-        audioUrl: data.audioUrl,
-        duration: data.duration,
-        transcript: data.transcript,
-        showTranscript: data.showTranscript,
-        questions: data.questions,
-        vocabulary: data.vocabulary || [],
-      };
-
-      // Get existing lessons count for order
       try {
+        // Step 1: If there's a pending audio file, upload it first to get real URL
+        let audioUrl = data.audioUrl;
+        
+        if (pendingAudioFile) {
+          try {
+            const { lessonsApi } = await import("../api/lessonsApi");
+            const uploadResult = await lessonsApi.uploadAudioFile(pendingAudioFile);
+            // Use the download URL from the upload response
+            audioUrl = uploadResult.url;
+          } catch (uploadError) {
+            console.error("Error uploading audio:", uploadError);
+            toast({
+              variant: "destructive",
+              title: "Upload Failed",
+              description: "Failed to upload audio file. Please try again.",
+            });
+            return; // Don't create lesson if upload fails
+          }
+        } else if (audioUrl?.startsWith("blob:")) {
+          // Clear blob URLs - they are not valid for storage
+          audioUrl = "";
+        }
+
+        // Step 2: Build the lesson content with real URL
+        const content = {
+          audioUrl: audioUrl || "",
+          duration: data.duration,
+          transcript: data.transcript,
+          showTranscript: data.showTranscript,
+          questions: data.questions,
+          vocabulary: data.vocabulary || [],
+        };
+
+        // Get existing lessons count for order
         const lessonsResponse = await api.get(`/lessons/sections/${sectionId}`);
         const newOrder = lessonsResponse.data.length;
 
@@ -293,6 +316,7 @@ export default function LessonCreatePage() {
           durationMinutes: durationMinutes,
         };
 
+        // Step 3: Create the lesson with the real audio URL
         await createLessonMutation.mutateAsync({
           sectionId,
           data: createData,
@@ -551,11 +575,10 @@ export default function LessonCreatePage() {
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
         <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-            step === "select-type"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
+          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${step === "select-type"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground"
+            }`}
         >
           1
         </div>
@@ -568,11 +591,10 @@ export default function LessonCreatePage() {
         </span>
         <div className="flex-1 h-px bg-border mx-2" />
         <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-            step === "edit-content"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
+          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${step === "edit-content"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground"
+            }`}
         >
           2
         </div>
